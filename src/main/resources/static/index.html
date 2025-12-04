@@ -74,17 +74,22 @@
 
                             <div id="timer-setup">
                                 <div class="form-group">
-                                    <label>Matéria <span class="add-btn" onclick="abrirModalMateria()">+</span></label>
-                                    <select id="timer-materia" onchange="carregarTopicos('timer')">
-                                        <option value="">Selecione a Matéria...</option>
-                                    </select>
+                                    <label>Matéria</label>
+                                    <div class="autocomplete-wrapper">
+                                        <input type="text" id="timer-materia-input"
+                                            placeholder="Busque ou crie uma matéria..." autocomplete="off">
+                                        <input type="hidden" id="timer-materia">
+                                        <div id="timer-materia-list" class="autocomplete-list"></div>
+                                    </div>
                                 </div>
                                 <div class="form-group">
-                                    <label>Assunto / Tópico <span class="add-btn"
-                                            onclick="abrirModalTopico()">+</span></label>
-                                    <select id="timer-topico">
-                                        <option value="">(Opcional) Tópico...</option>
-                                    </select>
+                                    <label>Assunto / Tópico</label>
+                                    <div class="autocomplete-wrapper">
+                                        <input type="text" id="timer-topico-input"
+                                            placeholder="Busque ou crie um tópico..." autocomplete="off">
+                                        <input type="hidden" id="timer-topico">
+                                        <div id="timer-topico-list" class="autocomplete-list"></div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -108,11 +113,13 @@
 
                             <div id="timer-details" style="display: none;">
                                 <div class="form-group">
-                                    <label>Tipo de Estudo <span class="add-btn"
-                                            onclick="abrirModalTipo()">+</span></label>
-                                    <select id="timer-tipo">
-                                        <option value="">Selecione...</option>
-                                    </select>
+                                    <label>Tipo de Estudo</label>
+                                    <div class="autocomplete-wrapper">
+                                        <input type="text" id="timer-tipo-input" placeholder="Selecione ou crie..."
+                                            autocomplete="off">
+                                        <input type="hidden" id="timer-tipo">
+                                        <div id="timer-tipo-list" class="autocomplete-list"></div>
+                                    </div>
                                 </div>
 
                                 <div class="form-row">
@@ -147,17 +154,22 @@
 
                         <form id="formManual" onsubmit="salvarManual(event)" style="display: none;">
                             <div class="form-group">
-                                <label>Matéria <span class="add-btn" onclick="abrirModalMateria()">+</span></label>
-                                <select id="manual-materia" required onchange="carregarTopicos('manual')">
-                                    <option value="">Matéria...</option>
-                                </select>
+                                <label>Matéria</label>
+                                <div class="autocomplete-wrapper">
+                                    <input type="text" id="manual-materia-input"
+                                        placeholder="Busque ou crie uma matéria..." autocomplete="off">
+                                    <input type="hidden" id="manual-materia">
+                                    <div id="manual-materia-list" class="autocomplete-list"></div>
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label>Assunto / Tópico <span class="add-btn"
-                                        onclick="abrirModalTopico()">+</span></label>
-                                <select id="manual-topico">
-                                    <option value="">(Opcional) Tópico...</option>
-                                </select>
+                                <label>Assunto / Tópico</label>
+                                <div class="autocomplete-wrapper">
+                                    <input type="text" id="manual-topico-input"
+                                        placeholder="Busque ou crie um tópico..." autocomplete="off">
+                                    <input type="hidden" id="manual-topico">
+                                    <div id="manual-topico-list" class="autocomplete-list"></div>
+                                </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
@@ -175,11 +187,13 @@
                                     <input type="time" id="manual-duracao" required>
                                 </div>
                                 <div class="form-group">
-                                    <label>Tipo de Estudo <span class="add-btn"
-                                            onclick="abrirModalTipo()">+</span></label>
-                                    <select id="manual-tipo" required>
-                                        <option value="">Selecione...</option>
-                                    </select>
+                                    <label>Tipo de Estudo</label>
+                                    <div class="autocomplete-wrapper">
+                                        <input type="text" id="manual-tipo-input" placeholder="Selecione ou crie..."
+                                            autocomplete="off">
+                                        <input type="hidden" id="manual-tipo">
+                                        <div id="manual-tipo-list" class="autocomplete-list"></div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="form-row">
@@ -252,27 +266,31 @@
 
             <!-- MANAGEMENT SECTION -->
             <section id="sec-gerenciar" style="display: none;">
-                <div class="management-grid">
+                <div class="management-container">
 
-                    <!-- Matérias e Tópicos -->
-                    <div class="manage-card">
-                        <div class="manage-header">
+                    <!-- Matérias (Accordion) -->
+                    <div class="manage-section">
+                        <div class="manage-header-row">
                             <h3>📚 Matérias e Assuntos</h3>
-                            <button class="btn-add-small" onclick="abrirModalMateria()">+ Matéria</button>
+                            <button class="btn-add-new" onclick="abrirModalMateria()">
+                                <span class="material-icons">add</span> Nova Matéria
+                            </button>
                         </div>
-                        <div id="lista-materias-gerenciar" class="manage-list">
-                            <!-- Lista renderizada via JS -->
+                        <div id="lista-materias-gerenciar" class="accordion-list">
+                            <!-- Renderizado via JS -->
                         </div>
                     </div>
 
-                    <!-- Tipos de Estudo -->
-                    <div class="manage-card">
-                        <div class="manage-header">
+                    <!-- Tipos de Estudo (Cards) -->
+                    <div class="manage-section">
+                        <div class="manage-header-row">
                             <h3>🏷️ Tipos de Estudo</h3>
-                            <button class="btn-add-small" onclick="abrirModalTipo()">+ Tipo</button>
+                            <button class="btn-add-new" onclick="abrirModalTipo()">
+                                <span class="material-icons">add</span> Novo Tipo
+                            </button>
                         </div>
-                        <div id="lista-tipos-gerenciar" class="manage-list">
-                            <!-- Lista renderizada via JS -->
+                        <div id="lista-tipos-gerenciar" class="cards-grid">
+                            <!-- Renderizado via JS -->
                         </div>
                     </div>
 

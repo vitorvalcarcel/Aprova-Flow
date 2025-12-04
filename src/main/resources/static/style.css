@@ -90,7 +90,10 @@ body {
     flex-direction: column;
 }
 
-.dash-right {}
+.dash-right {
+    display: flex;
+    flex-direction: column;
+}
 
 /* METRICS */
 .dash-header {
@@ -630,4 +633,245 @@ textarea:focus {
     padding: 10px 20px;
     border-radius: 8px;
     cursor: pointer;
+}
+
+/* --- NEW UI STYLES --- */
+
+/* Management Layout */
+.management-container {
+    display: flex;
+    gap: 30px;
+    height: 100%;
+}
+
+.manage-section {
+    flex: 1;
+    background: var(--white);
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow: hidden;
+}
+
+.manage-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.manage-header-row h3 {
+    color: var(--primary);
+    margin: 0;
+}
+
+.btn-add-new {
+    background: var(--secondary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-add-new:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Accordion (Matérias) */
+.accordion-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.accordion-item {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: 0.3s;
+}
+
+.accordion-item:hover {
+    border-color: #ddd;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.accordion-header {
+    background: #f9f9f9;
+    padding: 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: #444;
+}
+
+.accordion-header:hover {
+    background: #f0f0f0;
+}
+
+.accordion-header .actions {
+    display: flex;
+    gap: 10px;
+    opacity: 0.6;
+    transition: 0.2s;
+}
+
+.accordion-item:hover .accordion-header .actions {
+    opacity: 1;
+}
+
+.accordion-content {
+    display: none;
+    padding: 15px;
+    background: white;
+    border-top: 1px solid #eee;
+}
+
+.accordion-item.active .accordion-content {
+    display: block;
+    animation: slideDown 0.3s ease-out;
+}
+
+.topic-list {
+    list-style: none;
+    padding-left: 10px;
+}
+
+.topic-item {
+    padding: 8px 0;
+    border-bottom: 1px dashed #eee;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.topic-item:last-child {
+    border-bottom: none;
+}
+
+.btn-add-topic-inline {
+    background: none;
+    border: 1px dashed #ccc;
+    color: #888;
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-add-topic-inline:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: #f0f8ff;
+}
+
+/* Cards Grid (Tipos) */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+    overflow-y: auto;
+    padding: 5px;
+}
+
+.card-item {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100px;
+    position: relative;
+}
+
+.card-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-color: var(--primary);
+}
+
+.card-item strong {
+    color: var(--primary);
+    margin-bottom: 10px;
+    display: block;
+}
+
+.card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    opacity: 0;
+    transition: 0.2s;
+}
+
+.card-item:hover .card-actions {
+    opacity: 1;
+}
+
+/* Autocomplete */
+.autocomplete-wrapper {
+    position: relative;
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: none;
+}
+
+.autocomplete-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95rem;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.selected {
+    background-color: #f0f8ff;
+    color: var(--primary);
+}
+
+.autocomplete-item.new-item {
+    color: var(--secondary);
+    font-weight: bold;
+    background: #fff8e1;
 }

@@ -15,14 +15,114 @@ document.addEventListener("DOMContentLoaded", () => {
     carregarTiposEstudo();
 
     // Define a data de hoje como padrão no Manual
-    document.getElementById("manual-data").valueAsDate = new Date();
+    const manualData = document.getElementById("manual-data");
+    if (manualData) manualData.valueAsDate = new Date();
 
     // Auto-filter listeners
     ['filtro-materia', 'filtro-topico', 'filtro-tipo', 'filtro-periodo', 'filtro-data-inicio', 'filtro-data-fim'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('change', carregarHistorico);
     });
+
+    // Setup Autocomplete
+    setupAutocomplete('timer-materia', 'materias');
+    setupAutocomplete('timer-topico', 'topicos');
+    setupAutocomplete('timer-tipo', 'tipos');
+    
+    setupAutocomplete('manual-materia', 'materias');
+    setupAutocomplete('manual-topico', 'topicos');
+    setupAutocomplete('manual-tipo', 'tipos');
+
+    // Close autocomplete when clicking outside
+    document.addEventListener('click', function(e) {
+        document.querySelectorAll('.autocomplete-list').forEach(list => {
+            if (!list.parentElement.contains(e.target)) {
+                list.style.display = 'none';
+            }
+        });
+    });
 });
+
+// --- AUTOCOMPLETE LOGIC ---
+
+function setupAutocomplete(baseId, type) {
+    const input = document.getElementById(`${baseId}-input`);
+    const hidden = document.getElementById(baseId);
+    const list = document.getElementById(`${baseId}-list`);
+
+    if (!input || !hidden || !list) return;
+
+    input.addEventListener('input', function() {
+        const val = this.value;
+        const mode = baseId.split('-')[0]; // timer or manual
+
+        let source = [];
+        if (type === 'materias') source = materiasCache;
+        if (type === 'tipos') source = tiposEstudoCache;
+        if (type === 'topicos') {
+            const materiaId = document.getElementById(`${mode}-materia`).value;
+            if (materiaId) {
+                const mat = materiasCache.find(m => m.id == materiaId);
+                if (mat) source = mat.topicos || [];
+            }
+        }
+
+        renderAutocompleteList(source, val, list, hidden, input, type);
+    });
+
+    input.addEventListener('focus', function() {
+        // Trigger search on focus to show all or filtered
+        const event = new Event('input');
+        this.dispatchEvent(event);
+    });
+}
+
+function renderAutocompleteList(source, query, list, hidden, input, type) {
+    list.innerHTML = '';
+    list.style.display = 'block';
+
+    const matches = source.filter(item => {
+        const text = item.nome || item.descricao;
+        return text.toLowerCase().includes(query.toLowerCase());
+    });
+
+    // Option to create new
+    if (query && !matches.find(item => (item.nome || item.descricao).toLowerCase() === query.toLowerCase())) {
+        const newItem = document.createElement('div');
+        newItem.className = 'autocomplete-item new-item';
+        newItem.innerHTML = `Criar novo: "<strong>${query}</strong>"`;
+        newItem.onclick = () => {
+            hidden.value = ''; // Empty ID means new
+            input.value = query;
+            list.style.display = 'none';
+        };
+        list.appendChild(newItem);
+    }
+
+    matches.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'autocomplete-item';
+        div.innerText = item.nome || item.descricao;
+        div.onclick = () => {
+            hidden.value = item.id;
+            input.value = item.nome || item.descricao;
+            list.style.display = 'none';
+            
+            // If selecting materia, clear topic
+            if (type === 'materias') {
+                const mode = input.id.split('-')[0];
+                document.getElementById(`${mode}-topico`).value = '';
+                document.getElementById(`${mode}-topico-input`).value = '';
+            }
+        };
+        list.appendChild(div);
+    });
+
+    if (matches.length === 0 && !query) {
+        list.style.display = 'none';
+    }
+}
+
 
 // --- LÓGICA DE ABAS ---
 function mudarModo(modo) {
@@ -106,9 +206,11 @@ function cancelarCronometro() {
         document.getElementById('btnStart').style.display = 'flex';
         document.getElementById('btnPause').style.display = 'none';
 
-        document.getElementById('timer-materia').value = "";
-        document.getElementById('timer-topico').innerHTML = '<option value="">(Opcional)</option>';
-        document.getElementById('timer-tipo').value = "";
+        // Clear inputs
+        ['timer-materia', 'timer-topico', 'timer-tipo'].forEach(id => {
+            document.getElementById(id).value = "";
+            document.getElementById(`${id}-input`).value = "";
+        });
 
         document.getElementById('timer-qFeitas').value = "";
         document.getElementById('timer-qCertas').value = "";
@@ -143,24 +245,19 @@ async function carregarMaterias() {
         const response = await fetch(`${API_URL}/materias`);
         materiasCache = await response.json();
 
-        const selects = ['timer-materia', 'manual-materia', 'filtro-materia', 'edit-materia', 'topico-materia-pai'];
-
+        // Update filters and edit modal (still using selects)
+        const selects = ['filtro-materia', 'edit-materia', 'topico-materia-pai'];
         selects.forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
-
-            // Preserva valor selecionado se houver
             const valorAtual = el.value;
-
             el.innerHTML = id.includes('filtro') ? '<option value="">Todas Matérias</option>' : '<option value="">Selecione...</option>';
-
             materiasCache.forEach(m => {
                 let opt = document.createElement("option");
                 opt.value = m.id;
                 opt.text = m.nome;
                 el.add(opt);
             });
-
             if (valorAtual) el.value = valorAtual;
         });
 
@@ -176,23 +273,18 @@ async function carregarTiposEstudo() {
         const response = await fetch(`${API_URL}/tipos-estudo`);
         tiposEstudoCache = await response.json();
 
-        const selects = ['timer-tipo', 'manual-tipo', 'filtro-tipo', 'edit-tipo'];
-
+        const selects = ['filtro-tipo', 'edit-tipo'];
         selects.forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
-
             const valorAtual = el.value;
-
             el.innerHTML = id.includes('filtro') ? '<option value="">Todos Tipos</option>' : '<option value="">Selecione...</option>';
-
             tiposEstudoCache.forEach(t => {
                 let opt = document.createElement("option");
                 opt.value = t.id;
                 opt.text = t.nome;
                 el.add(opt);
             });
-
             if (valorAtual) el.value = valorAtual;
         });
 
@@ -203,7 +295,10 @@ async function carregarTiposEstudo() {
     }
 }
 
+// Kept for Filter and Edit modal
 function carregarTopicos(modo) {
+    if (modo === 'timer' || modo === 'manual') return; // Handled by autocomplete now
+
     const idMateria = document.getElementById(`${modo}-materia`).value;
     const selectTopico = document.getElementById(`${modo}-topico`);
 
@@ -231,20 +326,72 @@ async function carregarDashboard() {
     } catch (e) { console.error(e); }
 }
 
-// --- SALVAR TIMER ---
+// --- SALVAR COM VERIFICAÇÃO DE NOVOS ITENS ---
+
+async function ensureId(mode, type, name) {
+    const idField = document.getElementById(`${mode}-${type}`);
+    if (idField.value) return idField.value; // Already has ID
+
+    if (!name) return null; // Empty
+
+    // Create new
+    if (!confirm(`"${name}" não existe. Deseja criar como novo?`)) return null;
+
+    let url, body;
+    if (type === 'materia') {
+        url = `${API_URL}/materias`;
+        body = { nome: name };
+    } else if (type === 'tipo') {
+        url = `${API_URL}/tipos-estudo`;
+        body = { nome: name };
+    } else if (type === 'topico') {
+        const materiaId = document.getElementById(`${mode}-materia`).value;
+        if (!materiaId) {
+            alert("Selecione uma matéria existente antes de criar um tópico.");
+            return null;
+        }
+        url = `${API_URL}/topicos`;
+        body = { descricao: name, materia: { id: materiaId } };
+    }
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (response.ok) {
+            const created = await response.json();
+            // Refresh cache
+            if (type === 'materia' || type === 'topico') await carregarMaterias();
+            if (type === 'tipo') await carregarTiposEstudo();
+            return created.id;
+        }
+    } catch (e) { console.error(e); }
+    return null;
+}
+
 async function salvarTimer() {
-    const materiaId = document.getElementById("timer-materia").value;
+    const materiaNome = document.getElementById("timer-materia-input").value;
+    const materiaId = await ensureId('timer', 'materia', materiaNome);
+    
     if (!materiaId) {
-        mostrarModal("Atenção", "Selecione a matéria antes de salvar!");
+        mostrarModal("Atenção", "Selecione ou crie uma matéria válida!");
         return;
     }
+
+    const topicoNome = document.getElementById("timer-topico-input").value;
+    const topicoId = await ensureId('timer', 'topico', topicoNome);
+
+    const tipoNome = document.getElementById("timer-tipo-input").value;
+    const tipoId = await ensureId('timer', 'tipo', tipoNome);
 
     const registro = {
         data: new Date().toISOString().split('T')[0],
         horaInicio: horaInicioTimer,
         materiaId: materiaId,
-        topicoId: document.getElementById("timer-topico").value || null,
-        tipoEstudoId: document.getElementById("timer-tipo").value, // Agora é ID
+        topicoId: topicoId,
+        tipoEstudoId: tipoId,
         cargaHoraria: getTempoFormatado(),
         questoesFeitas: document.getElementById("timer-qFeitas").value || 0,
         questoesCertas: document.getElementById("timer-qCertas").value || 0,
@@ -254,16 +401,29 @@ async function salvarTimer() {
     await enviarRegistro(registro, true);
 }
 
-// --- SALVAR MANUAL ---
 async function salvarManual(e) {
     e.preventDefault();
+
+    const materiaNome = document.getElementById("manual-materia-input").value;
+    const materiaId = await ensureId('manual', 'materia', materiaNome);
+    
+    if (!materiaId) {
+        mostrarModal("Atenção", "Selecione ou crie uma matéria válida!");
+        return;
+    }
+
+    const topicoNome = document.getElementById("manual-topico-input").value;
+    const topicoId = await ensureId('manual', 'topico', topicoNome);
+
+    const tipoNome = document.getElementById("manual-tipo-input").value;
+    const tipoId = await ensureId('manual', 'tipo', tipoNome);
 
     const registro = {
         data: document.getElementById("manual-data").value,
         horaInicio: document.getElementById("manual-horaInicio").value + ":00",
-        materiaId: document.getElementById("manual-materia").value,
-        topicoId: document.getElementById("manual-topico").value || null,
-        tipoEstudoId: document.getElementById("manual-tipo").value, // Agora é ID
+        materiaId: materiaId,
+        topicoId: topicoId,
+        tipoEstudoId: tipoId,
         cargaHoraria: document.getElementById("manual-duracao").value,
         questoesFeitas: document.getElementById("manual-qFeitas").value || 0,
         questoesCertas: document.getElementById("manual-qCertas").value || 0,
@@ -297,12 +457,21 @@ async function enviarRegistro(registro, isTimer) {
                 document.getElementById('btnStart').style.display = 'flex';
                 document.getElementById('statusTimer').innerText = "Bora estudar?";
 
+                // Clear inputs
+                ['timer-materia', 'timer-topico', 'timer-tipo'].forEach(id => {
+                    document.getElementById(id).value = "";
+                    document.getElementById(`${id}-input`).value = "";
+                });
                 document.getElementById('timer-qFeitas').value = "";
                 document.getElementById('timer-qCertas').value = "";
                 document.getElementById('timer-anotacoes').value = "";
             } else {
                 document.getElementById("formManual").reset();
                 document.getElementById("manual-data").valueAsDate = new Date();
+                // Clear hidden inputs too
+                ['manual-materia', 'manual-topico', 'manual-tipo'].forEach(id => {
+                    document.getElementById(id).value = "";
+                });
             }
         } else {
             mostrarModal("Erro", "Erro ao salvar. Verifique os dados.");
@@ -563,7 +732,17 @@ async function abrirModalEdicao(id) {
     document.getElementById('edit-id').value = id;
 
     document.getElementById('edit-materia').value = registro.materia.id;
-    carregarTopicos('edit');
+    // Force load topics for edit
+    const selectTopico = document.getElementById('edit-topico');
+    selectTopico.innerHTML = '<option value="">(Opcional) Selecione...</option>';
+    if (registro.materia.topicos) {
+        registro.materia.topicos.forEach(t => {
+            let option = document.createElement("option");
+            option.value = t.id;
+            option.text = `${t.numeroEdital ? t.numeroEdital + '. ' : ''}${t.descricao.substring(0, 50)}...`;
+            selectTopico.add(option);
+        });
+    }
 
     setTimeout(() => {
         if (registro.topico) document.getElementById('edit-topico').value = registro.topico.id;
@@ -629,24 +808,56 @@ function renderizarGerenciarMaterias() {
 
     materiasCache.forEach(m => {
         const item = document.createElement('div');
-        item.className = 'manage-item';
-        item.innerHTML = `
-            <div class="manage-info">
-                <strong>${m.nome}</strong>
-                <small>${m.topicos ? m.topicos.length : 0} tópicos</small>
-            </div>
-            <div class="manage-actions">
-                <button class="btn-icon-action" onclick="abrirModalMateria(${m.id}, '${m.nome}')" title="Editar">
-                    <span class="material-icons">edit</span>
-                </button>
-                <button class="btn-icon-action" onclick="resetarHistoricoMateria(${m.id})" title="Resetar Histórico">
-                    <span class="material-icons">history_toggle_off</span>
-                </button>
-                <button class="btn-icon-action delete" onclick="excluirMateria(${m.id})" title="Excluir">
-                    <span class="material-icons">delete</span>
-                </button>
+        item.className = 'accordion-item';
+        
+        // Header
+        const header = document.createElement('div');
+        header.className = 'accordion-header';
+        header.innerHTML = `
+            <span>${m.nome}</span>
+            <div class="actions">
+                <span class="material-icons" onclick="event.stopPropagation(); abrirModalMateria(${m.id}, '${m.nome}')">edit</span>
+                <span class="material-icons" onclick="event.stopPropagation(); resetarHistoricoMateria(${m.id})">history_toggle_off</span>
+                <span class="material-icons" onclick="event.stopPropagation(); excluirMateria(${m.id})">delete</span>
+                <span class="material-icons">expand_more</span>
             </div>
         `;
+        header.onclick = () => {
+            const wasActive = item.classList.contains('active');
+            document.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
+            if (!wasActive) item.classList.add('active');
+        };
+
+        // Content
+        const content = document.createElement('div');
+        content.className = 'accordion-content';
+        
+        let topicsHtml = '<ul class="topic-list">';
+        if (m.topicos && m.topicos.length > 0) {
+            m.topicos.forEach(t => {
+                topicsHtml += `
+                    <li class="topic-item">
+                        <span>${t.numeroEdital ? t.numeroEdital + '. ' : ''}${t.descricao}</span>
+                        <!-- Future: Add edit/delete for topics -->
+                    </li>
+                `;
+            });
+        } else {
+            topicsHtml += '<li class="topic-item">Nenhum tópico cadastrado.</li>';
+        }
+        topicsHtml += '</ul>';
+        
+        // Add Topic Button inside Accordion
+        topicsHtml += `
+            <button class="btn-add-topic-inline" onclick="abrirModalTopicoInline(${m.id})">
+                + Adicionar Tópico
+            </button>
+        `;
+
+        content.innerHTML = topicsHtml;
+
+        item.appendChild(header);
+        item.appendChild(content);
         lista.appendChild(item);
     });
 }
@@ -658,18 +869,12 @@ function renderizarGerenciarTipos() {
 
     tiposEstudoCache.forEach(t => {
         const item = document.createElement('div');
-        item.className = 'manage-item';
+        item.className = 'card-item';
         item.innerHTML = `
-            <div class="manage-info">
-                <strong>${t.nome}</strong>
-            </div>
-            <div class="manage-actions">
-                <button class="btn-icon-action" onclick="abrirModalTipo(${t.id}, '${t.nome}')" title="Editar">
-                    <span class="material-icons">edit</span>
-                </button>
-                <button class="btn-icon-action delete" onclick="excluirTipo(${t.id})" title="Excluir">
-                    <span class="material-icons">delete</span>
-                </button>
+            <strong>${t.nome}</strong>
+            <div class="card-actions">
+                <span class="material-icons" onclick="abrirModalTipo(${t.id}, '${t.nome}')" style="color:#888; cursor:pointer;">edit</span>
+                <span class="material-icons" onclick="excluirTipo(${t.id})" style="color:#dc3545; cursor:pointer;">delete</span>
             </div>
         `;
         lista.appendChild(item);
@@ -701,17 +906,8 @@ async function salvarMateria(e) {
             body: JSON.stringify({ nome })
         });
         if (response.ok) {
-            const novaMateria = await response.json();
             fecharModalMateria();
             carregarMaterias();
-
-            // Se foi criado via Quick Add no Timer/Manual, seleciona ela
-            if (!id && document.getElementById('timer-materia').offsetParent) {
-                setTimeout(() => {
-                    document.getElementById('timer-materia').value = novaMateria.id;
-                    carregarTopicos('timer');
-                }, 500);
-            }
         }
     } catch (e) { console.error(e); }
 }
@@ -733,21 +929,20 @@ async function resetarHistoricoMateria(id) {
 
 // Topico CRUD (Quick Add)
 function abrirModalTopico() {
-    const materiaId = document.getElementById('timer-materia').value || document.getElementById('manual-materia').value;
-    if (!materiaId) {
-        mostrarModal("Atenção", "Selecione uma matéria antes de adicionar um tópico.");
-        return;
-    }
-    document.getElementById('topico-materia-pai').innerHTML = ''; // Limpa
-    // Popula select com a materia selecionada (ou todas)
-    materiasCache.forEach(m => {
+    // Legacy support for modal
+    document.getElementById('modal-topico').style.display = 'flex';
+}
+
+function abrirModalTopicoInline(materiaId) {
+    document.getElementById('topico-materia-pai').innerHTML = '';
+    const m = materiasCache.find(mat => mat.id == materiaId);
+    if(m) {
         let opt = document.createElement("option");
         opt.value = m.id;
         opt.text = m.nome;
         document.getElementById('topico-materia-pai').add(opt);
-    });
+    }
     document.getElementById('topico-materia-pai').value = materiaId;
-
     document.getElementById('topico-id').value = '';
     document.getElementById('topico-nome').value = '';
     document.getElementById('topico-numero').value = '';
@@ -777,17 +972,8 @@ async function salvarTopico(e) {
             body: JSON.stringify(topico)
         });
         if (response.ok) {
-            const novoTopico = await response.json();
             fecharModalTopico();
             carregarMaterias(); // Recarrega para atualizar cache de tópicos
-
-            // Auto-seleciona
-            setTimeout(() => {
-                const modo = document.getElementById('mode-timer').style.display !== 'none' ? 'timer' : 'manual';
-                document.getElementById(`${modo}-materia`).value = materiaId;
-                carregarTopicos(modo);
-                document.getElementById(`${modo}-topico`).value = novoTopico.id;
-            }, 500);
         }
     } catch (e) { console.error(e); }
 }
@@ -817,21 +1003,14 @@ async function salvarTipo(e) {
             body: JSON.stringify({ nome })
         });
         if (response.ok) {
-            const novoTipo = await response.json();
             fecharModalTipo();
             carregarTiposEstudo();
-
-            if (!id && document.getElementById('timer-tipo').offsetParent) {
-                setTimeout(() => {
-                    document.getElementById('timer-tipo').value = novoTipo.id;
-                }, 200);
-            }
         }
     } catch (e) { console.error(e); }
 }
 
 async function excluirTipo(id) {
-    confirmarAcao("ATENÇÃO: Excluir este tipo apagará TODOS os registros vinculados a ele! Irreversível.", async () => {
+    confirmarAcao("Tem certeza que deseja excluir este tipo de estudo?", async () => {
         await fetch(`${API_URL}/tipos-estudo/${id}`, { method: 'DELETE' });
         carregarTiposEstudo();
     });
