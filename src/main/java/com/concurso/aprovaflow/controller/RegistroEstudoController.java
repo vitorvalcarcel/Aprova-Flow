@@ -86,9 +86,10 @@ public class RegistroEstudoController {
             @RequestParam(required = false) Long materiaId,
             @RequestParam(required = false) Long topicoId,
             @RequestParam(required = false) String tipoEstudo,
-            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate data
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dataInicio,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dataFim
     ) {
-        return registroService.listarComFiltros(materiaId, topicoId, tipoEstudo, data);
+        return registroService.listarComFiltros(materiaId, topicoId, tipoEstudo, dataInicio, dataFim);
     }
 
     @PutMapping("/{id}")

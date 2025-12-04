@@ -183,11 +183,11 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Feitas</label>
+                                    <label>Questões Feitas</label>
                                     <input type="number" id="manual-qFeitas" min="0" placeholder="Feitas">
                                 </div>
                                 <div class="form-group">
-                                    <label>Certas</label>
+                                    <label>Questões Certas</label>
                                     <input type="number" id="manual-qCertas" min="0" placeholder="Certas">
                                 </div>
                             </div>
@@ -222,7 +222,25 @@
                                 <option value="Questões">Questões</option>
                                 <option value="Revisão">Revisão</option>
                             </select>
-                            <input type="date" id="filtro-data">
+
+                            <select id="filtro-periodo" onchange="atualizarFiltroData()">
+                                <option value="max">Máximo (Tudo)</option>
+                                <option value="hoje">Hoje</option>
+                                <option value="ontem">Ontem</option>
+                                <option value="7dias">Últimos 7 dias</option>
+                                <option value="30dias">Últimos 30 dias</option>
+                                <option value="mesAtual">Este Mês</option>
+                                <option value="mesPassado">Mês Passado</option>
+                                <option value="custom">Personalizado...</option>
+                            </select>
+
+                            <!-- Campos ocultos para data personalizada -->
+                            <div id="div-datas-custom" style="display:none; gap:5px; align-items:center;">
+                                <input type="date" id="filtro-data-inicio" onchange="carregarHistorico()">
+                                <span>até</span>
+                                <input type="date" id="filtro-data-fim" onchange="carregarHistorico()">
+                            </div>
+
                             <button class="btn-filter" onclick="carregarHistorico()" style="display:none;">
                                 <span class="material-icons">filter_list</span>
                             </button>
@@ -294,11 +312,11 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Feitas</label>
+                        <label>Questões Feitas</label>
                         <input type="number" id="edit-qFeitas" min="0">
                     </div>
                     <div class="form-group">
-                        <label>Certas</label>
+                        <label>Questões Certas</label>
                         <input type="number" id="edit-qCertas" min="0">
                     </div>
                 </div>

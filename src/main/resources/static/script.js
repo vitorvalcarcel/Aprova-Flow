@@ -1,5 +1,6 @@
 const API_URL = "http://localhost:8080";
 let materiasCache = [];
+let registrosGlobais = []; // Cache para edição
 
 // Variáveis do Cronômetro
 let timerInterval;
@@ -15,8 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("manual-data").valueAsDate = new Date();
 
     // Auto-filter listeners
-    ['filtro-materia', 'filtro-topico', 'filtro-tipo', 'filtro-data'].forEach(id => {
-        document.getElementById(id).addEventListener('change', carregarHistorico);
+    ['filtro-materia', 'filtro-topico', 'filtro-tipo', 'filtro-periodo', 'filtro-data-inicio', 'filtro-data-fim'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', carregarHistorico);
     });
 });
 
@@ -41,8 +43,6 @@ function mudarModo(modo) {
 
 // --- LÓGICA DO CRONÔMETRO ---
 function iniciarCronometro() {
-    // REMOVIDO: Validação obrigatória de matéria no início
-
     if (isRodando) return;
 
     if (segundosTotais === 0) {
@@ -54,9 +54,6 @@ function iniciarCronometro() {
 
     document.getElementById('btnStart').style.display = 'none';
     document.getElementById('btnPause').style.display = 'flex';
-    // REMOVIDO: Bloqueio de edição (Req 1)
-    // document.getElementById('timer-setup').style.opacity = '0.5';
-    // document.getElementById('timer-setup').style.pointerEvents = 'none';
     document.getElementById('timer-details').style.display = 'none';
 
     document.getElementById('statusTimer').innerText = "Estudando... Foco!";
@@ -107,8 +104,6 @@ function cancelarCronometro() {
         document.getElementById('btnStart').style.display = 'flex';
         document.getElementById('btnPause').style.display = 'none';
 
-        // document.getElementById('timer-setup').style.opacity = '1';
-        // document.getElementById('timer-setup').style.pointerEvents = 'auto';
         document.getElementById('timer-materia').value = "";
         document.getElementById('timer-topico').innerHTML = '<option value="">(Opcional)</option>';
 
@@ -195,13 +190,6 @@ async function carregarDashboard() {
 
 // --- SALVAR TIMER ---
 async function salvarTimer() {
-    // REMOVIDO: Validação de 1 minuto (Req 2)
-    /* if (segundosTotais < 60) {
-        mostrarModal("Atenção", "Estude pelo menos 1 minuto para registrar! 😉");
-        return;
-    } */
-
-    // Validação Tardia: Matéria Obrigatória
     const materiaId = document.getElementById("timer-materia").value;
     if (!materiaId) {
         mostrarModal("Atenção", "Selecione a matéria antes de salvar!");
@@ -264,8 +252,6 @@ async function enviarRegistro(registro, isTimer) {
 
                 document.getElementById('timer-details').style.display = 'none';
                 document.getElementById('btnStart').style.display = 'flex';
-                // document.getElementById('timer-setup').style.opacity = '1';
-                // document.getElementById('timer-setup').style.pointerEvents = 'auto';
                 document.getElementById('statusTimer').innerText = "Bora estudar?";
 
                 document.getElementById('timer-qFeitas').value = "";
@@ -301,6 +287,18 @@ function mudarAba(aba) {
     }
 }
 
+function atualizarFiltroData() {
+    const periodo = document.getElementById('filtro-periodo').value;
+    const divCustom = document.getElementById('div-datas-custom');
+
+    if (periodo === 'custom') {
+        divCustom.style.display = 'flex';
+    } else {
+        divCustom.style.display = 'none';
+        carregarHistorico(); // Recarrega se mudar de custom para outro
+    }
+}
+
 async function carregarHistorico() {
     const lista = document.getElementById('lista-historico');
     lista.innerHTML = '<p style="text-align:center; color:#888;">Carregando...</p>';
@@ -308,18 +306,57 @@ async function carregarHistorico() {
     const materiaId = document.getElementById('filtro-materia').value;
     const topicoId = document.getElementById('filtro-topico').value;
     const tipo = document.getElementById('filtro-tipo').value;
-    const data = document.getElementById('filtro-data').value;
+    const periodo = document.getElementById('filtro-periodo').value;
+
+    let dataInicio = null;
+    let dataFim = null;
+    const hoje = new Date();
+
+    // Lógica de Datas
+    if (periodo === 'hoje') {
+        dataInicio = hoje.toISOString().split('T')[0];
+        dataFim = dataInicio;
+    } else if (periodo === 'ontem') {
+        const ontem = new Date(hoje);
+        ontem.setDate(hoje.getDate() - 1);
+        dataInicio = ontem.toISOString().split('T')[0];
+        dataFim = dataInicio;
+    } else if (periodo === '7dias') {
+        const seteDiasAtras = new Date(hoje);
+        seteDiasAtras.setDate(hoje.getDate() - 7);
+        dataInicio = seteDiasAtras.toISOString().split('T')[0];
+        dataFim = hoje.toISOString().split('T')[0];
+    } else if (periodo === '30dias') {
+        const trintaDiasAtras = new Date(hoje);
+        trintaDiasAtras.setDate(hoje.getDate() - 30);
+        dataInicio = trintaDiasAtras.toISOString().split('T')[0];
+        dataFim = hoje.toISOString().split('T')[0];
+    } else if (periodo === 'mesAtual') {
+        const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        dataInicio = primeiroDia.toISOString().split('T')[0];
+        dataFim = hoje.toISOString().split('T')[0];
+    } else if (periodo === 'mesPassado') {
+        const primeiroDiaMesPassado = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+        const ultimoDiaMesPassado = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
+        dataInicio = primeiroDiaMesPassado.toISOString().split('T')[0];
+        dataFim = ultimoDiaMesPassado.toISOString().split('T')[0];
+    } else if (periodo === 'custom') {
+        dataInicio = document.getElementById('filtro-data-inicio').value;
+        dataFim = document.getElementById('filtro-data-fim').value;
+    }
+    // 'max' não define datas, manda null
 
     const params = new URLSearchParams();
     if (materiaId) params.append('materiaId', materiaId);
     if (topicoId) params.append('topicoId', topicoId);
     if (tipo) params.append('tipoEstudo', tipo);
-    if (data) params.append('data', data);
+    if (dataInicio) params.append('dataInicio', dataInicio);
+    if (dataFim) params.append('dataFim', dataFim);
 
     try {
         const response = await fetch(`${API_URL}/estudos?${params.toString()}`);
-        const registros = await response.json();
-        renderizarTabela(registros);
+        registrosGlobais = await response.json();
+        renderizarTabela(registrosGlobais);
     } catch (error) {
         console.error(error);
         lista.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar histórico.</p>';
@@ -402,7 +439,6 @@ function toggleDetalhes(id) {
     } else {
         details.style.display = 'block';
         item.classList.add('open');
-        // Scroll suave
         setTimeout(() => {
             item.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 100);
@@ -415,7 +451,6 @@ function mostrarModal(titulo, mensagem) {
     document.getElementById('modal-title').innerText = titulo;
     document.getElementById('modal-message').innerText = mensagem;
 
-    // Limpa ações e adiciona botão OK
     const actions = document.getElementById('modal-actions');
     actions.innerHTML = '<button class="btn-modal-ok" onclick="fecharModal()">OK</button>';
 
@@ -474,34 +509,15 @@ async function excluirRegistro(id) {
 let registroEmEdicaoId = null;
 
 async function abrirModalEdicao(id) {
-    // Busca dados atuais do registro (poderia pegar do cache, mas melhor garantir)
-    // Como não temos endpoint GET /id, vamos pegar do cache da tabela se possível ou implementar
-    // Para simplificar, vamos pegar do DOM ou fazer um find no array se tivéssemos guardado
-    // Vamos fazer um truque: recarregar o histórico traz tudo. Vamos assumir que os dados estão na tela? Não.
-    // O ideal seria ter um GET /estudos/{id}. Mas como não pedi isso no backend, 
-    // vou usar os dados que já tenho no front se eu salvar em uma variável global ou...
-    // ESPERA! Eu adicionei GET /estudos com filtros. Posso filtrar por ID? Não.
-    // Vou adicionar um endpoint GET /estudos/{id} no backend? Não, o usuário não pediu explicitamente, mas é bom.
-    // Mas espere, eu tenho `buscarPorId` no service e controller? Sim, eu adicionei `atualizar` e `excluir`. 
-    // Faltou o GET /estudos/{id} no Controller!
-    // Vou usar os dados que estão no HTML? Não, muito ruim.
-    // Vou adicionar o endpoint GET /estudos/{id} agora? Sim, é melhor.
-    // ... Pensando bem, eu já editei o controller e service. Vou assumir que posso adicionar mais um endpoint rápido ou
-    // tentar pegar os dados de outra forma.
-    // Ah, eu tenho a lista `registros` no `carregarHistorico`. Vou salvar ela numa variável global.
-
-    // Solução rápida: Salvar lista global
     const registro = registrosGlobais.find(r => r.id === id);
     if (!registro) return;
 
     registroEmEdicaoId = id;
     document.getElementById('edit-id').value = id;
 
-    // Popula campos
     document.getElementById('edit-materia').value = registro.materia.id;
-    carregarTopicos('edit'); // Carrega tópicos da matéria
+    carregarTopicos('edit');
 
-    // Pequeno delay para tópicos carregarem
     setTimeout(() => {
         if (registro.topico) document.getElementById('edit-topico').value = registro.topico.id;
     }, 100);
@@ -529,7 +545,7 @@ async function salvarEdicao(e) {
         materiaId: document.getElementById('edit-materia').value,
         topicoId: document.getElementById('edit-topico').value || null,
         data: document.getElementById('edit-data').value,
-        horaInicio: document.getElementById('edit-horaInicio').value, // Pode precisar ajustar segundos
+        horaInicio: document.getElementById('edit-horaInicio').value,
         cargaHoraria: document.getElementById('edit-duracao').value,
         tipoEstudo: document.getElementById('edit-tipo').value,
         questoesFeitas: document.getElementById('edit-qFeitas').value || 0,
@@ -554,35 +570,5 @@ async function salvarEdicao(e) {
     } catch (error) {
         console.error(error);
         mostrarModal("Erro", "Erro de conexão.");
-    }
-}
-
-// Variável global para auxiliar na edição
-let registrosGlobais = [];
-
-// Sobrescrevendo carregarHistorico para salvar na global
-const carregarHistoricoOriginal = carregarHistorico;
-carregarHistorico = async function () {
-    const lista = document.getElementById('lista-historico');
-    lista.innerHTML = '<p style="text-align:center; color:#888;">Carregando...</p>';
-
-    const materiaId = document.getElementById('filtro-materia').value;
-    const topicoId = document.getElementById('filtro-topico').value;
-    const tipo = document.getElementById('filtro-tipo').value;
-    const data = document.getElementById('filtro-data').value;
-
-    const params = new URLSearchParams();
-    if (materiaId) params.append('materiaId', materiaId);
-    if (topicoId) params.append('topicoId', topicoId);
-    if (tipo) params.append('tipoEstudo', tipo);
-    if (data) params.append('data', data);
-
-    try {
-        const response = await fetch(`${API_URL}/estudos?${params.toString()}`);
-        registrosGlobais = await response.json(); // Salva na global
-        renderizarTabela(registrosGlobais);
-    } catch (error) {
-        console.error(error);
-        lista.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar histórico.</p>';
     }
 }
