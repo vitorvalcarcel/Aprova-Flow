@@ -2,14 +2,17 @@ package com.concurso.aprovaflow.dto;
 
 import lombok.Data;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Data
 public class RegistroDTO {
     private LocalDate data;
-    private String cargaHoraria; // Recebe como texto "01:30" e convertemos depois
+    private LocalTime horaInicio; // Novo
+    private String cargaHoraria; // Texto "HH:mm"
     private String tipoEstudo;
+    private String anotacoes; // Novo
     private Integer questoesFeitas;
     private Integer questoesCertas;
-    private Long materiaId; // Só o ID, não o objeto inteiro
+    private Long materiaId;
     private Long topicoId;
 }

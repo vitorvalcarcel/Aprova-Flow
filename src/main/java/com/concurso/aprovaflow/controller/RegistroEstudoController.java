@@ -24,13 +24,15 @@ public class RegistroEstudoController {
     private MateriaService materiaService;
 
     @Autowired
-    private TopicoRepository topicoRepository; // Adicionado para buscar o tópico
+    private TopicoRepository topicoRepository;
 
     @PostMapping
     public ResponseEntity<RegistroEstudo> salvar(@RequestBody RegistroDTO dto) {
         RegistroEstudo novo = new RegistroEstudo();
         novo.setData(dto.getData());
+        novo.setHoraInicio(dto.getHoraInicio()); // Mapeando hora inicio
         novo.setTipoEstudo(dto.getTipoEstudo());
+        novo.setAnotacoes(dto.getAnotacoes());   // Mapeando anotações
         novo.setQuestoesFeitas(dto.getQuestoesFeitas());
         novo.setQuestoesCertas(dto.getQuestoesCertas());
         
@@ -55,7 +57,7 @@ public class RegistroEstudoController {
                 .orElseThrow(() -> new RuntimeException("Matéria não encontrada"));
         novo.setMateria(materia);
 
-        // 2. Busca e define o Tópico (Opcional) - AQUI ESTÁ A CORREÇÃO
+        // 2. Busca e define o Tópico (Opcional)
         if (dto.getTopicoId() != null) {
             var topico = topicoRepository.findById(dto.getTopicoId())
                     .orElse(null); 
@@ -75,7 +77,7 @@ public class RegistroEstudoController {
         DashboardDTO dash = new DashboardDTO();
         dash.setTotalHorasCiclo(registroService.calcularTotalHorasCiclo());
         dash.setMensagemMotivacional("Foco no Banco do Brasil! Continue firme.");
-        dash.setDesempenhoPorMateria(List.of()); // Implementaremos depois
+        dash.setDesempenhoPorMateria(List.of()); 
         return ResponseEntity.ok(dash);
     }
 }

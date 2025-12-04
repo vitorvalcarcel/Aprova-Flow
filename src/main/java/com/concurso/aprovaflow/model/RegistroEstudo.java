@@ -15,9 +15,14 @@ public class RegistroEstudo {
 
     private LocalDate data;
 
-    private LocalTime cargaHoraria; // Ex: 01:30:00
+    private LocalTime horaInicio; // Novo campo: Hora que começou a estudar
+
+    private LocalTime cargaHoraria; // Ex: 01:30:00 (Duração)
 
     private String tipoEstudo; // Videoaula, PDF, Questões...
+
+    @Column(length = 2000)
+    private String anotacoes; // Novo campo: Observações sobre o estudo
 
     private Integer questoesFeitas;
     
