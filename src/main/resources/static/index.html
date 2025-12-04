@@ -3,79 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AprovaFlow - BB TI</title>
+    <title>AprovaFlow - Banco do Brasil</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
 
     <div class="container">
-        <header>
-            <h1>🚀 AprovaFlow</h1>
-            <p>Foco no Banco do Brasil (Agente de TI)</p>
+        
+        <header class="dash-header">
+            <div class="dash-info">
+                <h2>📊 Status do Ciclo</h2>
+                <div class="dash-metrics">
+                    <div class="metric-card">
+                        <span class="label">Horas Totais</span>
+                        <strong id="lblHoras">--:--</strong>
+                    </div>
+                    <div class="metric-card highlight">
+                        <span class="label">Mensagem</span>
+                        <strong id="lblMensagem" style="font-size: 0.9em;">Carregando...</strong>
+                    </div>
+                </div>
+            </div>
         </header>
 
-        <section class="dashboard-cards">
-            <div class="card">
-                <h3>Tempo no Ciclo</h3>
-                <h1 id="lblHoras">--:--</h1>
-                <p id="lblMensagem">Carregando...</p>
+        <main class="study-session">
+            <div class="session-header">
+                <h3>⏱️ Registrar Estudo</h3>
+                
+                <div class="toggle-mode">
+                    <button class="mode-btn active" onclick="mudarModo('timer')">Cronômetro</button>
+                    <button class="mode-btn" onclick="mudarModo('manual')">Manual</button>
+                </div>
             </div>
-            </section>
 
-        <section class="form-section">
-            <h2>📝 Registrar Estudo</h2>
             <form id="formEstudo">
                 
-                <div class="form-group">
-                    <label>Data:</label>
-                    <input type="date" id="data" required>
-                </div>
+                <div class="common-fields">
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Data</label>
+                            <input type="date" id="data" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Tipo</label>
+                            <select id="tipo" required onchange="toggleQuestoes()">
+                                <option value="Videoaula">Vídeo Aula</option>
+                                <option value="PDF">Leitura PDF</option>
+                                <option value="Questões">Questões</option>
+                                <option value="Revisão">Revisão</option>
+                                <option value="Simulado">Simulado</option>
+                            </select>
+                        </div>
+                    </div>
 
-                <div class="form-group">
-                    <label>Matéria:</label>
-                    <select id="materia" required onchange="carregarTopicos()">
-                        <option value="">Selecione...</option>
+                    <div class="form-group">
+                        <label>Matéria *</label>
+                        <select id="materia" required onchange="carregarTopicos()">
+                            <option value="">Carregando...</option>
                         </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Assunto (Tópico) <small>(Opcional)</small></label>
+                        <select id="topico">
+                            <option value="">Selecione a matéria...</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Tópico (Opcional):</label>
-                    <select id="topico">
-                        <option value="">Selecione a matéria primeiro...</option>
-                    </select>
+                <div id="mode-timer" class="input-mode">
+                    <div class="timer-display">
+                        <span id="display-horas">00</span>:<span id="display-minutos">00</span>:<span id="display-segundos">00</span>
+                    </div>
+                    
+                    <div class="timer-controls">
+                        <button type="button" id="btnStart" class="btn-control play" onclick="iniciarCronometro()">
+                            <span class="material-icons">play_arrow</span> Iniciar
+                        </button>
+                        
+                        <button type="button" id="btnPause" class="btn-control pause" onclick="pausarCronometro()" style="display:none;">
+                            <span class="material-icons">pause</span> Pausar
+                        </button>
+                        
+                        <button type="button" class="btn-control reset" onclick="resetarCronometro()">
+                            <span class="material-icons">replay</span> Reset
+                        </button>
+                    </div>
+                    <p class="timer-status" id="statusTimer">Pronto para começar</p>
                 </div>
 
-                <div class="form-group">
-                    <label>Carga Horária (HH:mm):</label>
-                    <input type="time" id="carga" required>
+                <div id="mode-manual" class="input-mode" style="display: none;">
+                    <div class="form-group">
+                        <label>Duração do Estudo (HH:mm)</label>
+                        <input type="time" id="cargaManual" class="input-time-large">
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Tipo:</label>
-                    <select id="tipo" required onchange="toggleQuestoes()">
-                        <option value="Videoaula">Vídeo Aula</option>
-                        <option value="PDF">Leitura PDF</option>
-                        <option value="Questões">Resolução de Questões</option>
-                        <option value="Revisão">Revisão</option>
-                    </select>
-                </div>
-
-                <div id="areaQuestoes" style="display:none;">
+                <div id="areaQuestoes" style="display:none; margin-top: 15px; background: #eef2f6; padding: 10px; border-radius: 8px;">
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Feitas:</label>
-                            <input type="number" id="qFeitas" min="0">
+                            <label>Qtd. Feitas</label>
+                            <input type="number" id="qFeitas" min="0" placeholder="0">
                         </div>
                         <div class="form-group">
-                            <label>Certas:</label>
-                            <input type="number" id="qCertas" min="0">
+                            <label>Qtd. Certas</label>
+                            <input type="number" id="qCertas" min="0" placeholder="0">
                         </div>
                     </div>
                 </div>
 
-                <button type="submit" class="btn-save">Salvar Estudo</button>
+                <button type="submit" class="btn-save">
+                    <span class="material-icons">save</span> Salvar Registro
+                </button>
+
             </form>
-        </section>
+        </main>
     </div>
 
     <script src="script.js"></script>

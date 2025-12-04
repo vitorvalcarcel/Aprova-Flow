@@ -3,6 +3,7 @@ package com.concurso.aprovaflow.controller;
 import com.concurso.aprovaflow.dto.DashboardDTO;
 import com.concurso.aprovaflow.dto.RegistroDTO;
 import com.concurso.aprovaflow.model.RegistroEstudo;
+import com.concurso.aprovaflow.repository.TopicoRepository;
 import com.concurso.aprovaflow.service.MateriaService;
 import com.concurso.aprovaflow.service.RegistroEstudoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,10 @@ public class RegistroEstudoController {
     private RegistroEstudoService registroService;
 
     @Autowired
-    private MateriaService materiaService; // Para buscar a matéria pelo ID
+    private MateriaService materiaService;
+
+    @Autowired
+    private TopicoRepository topicoRepository; // Adicionado para buscar o tópico
 
     @PostMapping
     public ResponseEntity<RegistroEstudo> salvar(@RequestBody RegistroDTO dto) {
@@ -29,18 +33,34 @@ public class RegistroEstudoController {
         novo.setTipoEstudo(dto.getTipoEstudo());
         novo.setQuestoesFeitas(dto.getQuestoesFeitas());
         novo.setQuestoesCertas(dto.getQuestoesCertas());
-        novo.setQuestoesErradas(dto.getQuestoesFeitas() - dto.getQuestoesCertas());
         
-        // Convertendo String "01:30" para LocalTime
-        novo.setCargaHoraria(LocalTime.parse(dto.getCargaHoraria() + ":00")); 
+        // Calcula erradas automaticamente se houver dados
+        if (dto.getQuestoesFeitas() != null && dto.getQuestoesCertas() != null) {
+            novo.setQuestoesErradas(dto.getQuestoesFeitas() - dto.getQuestoesCertas());
+        } else {
+            novo.setQuestoesFeitas(0);
+            novo.setQuestoesCertas(0);
+            novo.setQuestoesErradas(0);
+        }
+        
+        // Converte "01:30" para objeto de Hora do Java
+        // Garante formato HH:mm:ss
+        String horaFormatada = dto.getCargaHoraria().length() == 5 ? dto.getCargaHoraria() + ":00" : dto.getCargaHoraria();
+        novo.setCargaHoraria(LocalTime.parse(horaFormatada)); 
 
-        // Buscando a matéria no banco pelo ID que veio do DTO
+        // 1. Busca e define a Matéria (Obrigatória)
         var materia = materiaService.listarTodas().stream()
                 .filter(m -> m.getId().equals(dto.getMateriaId()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Matéria não encontrada"));
-        
         novo.setMateria(materia);
+
+        // 2. Busca e define o Tópico (Opcional) - AQUI ESTÁ A CORREÇÃO
+        if (dto.getTopicoId() != null) {
+            var topico = topicoRepository.findById(dto.getTopicoId())
+                    .orElse(null); 
+            novo.setTopico(topico);
+        }
 
         return ResponseEntity.ok(registroService.registrar(novo));
     }
@@ -54,12 +74,8 @@ public class RegistroEstudoController {
     public ResponseEntity<DashboardDTO> getDashboard() {
         DashboardDTO dash = new DashboardDTO();
         dash.setTotalHorasCiclo(registroService.calcularTotalHorasCiclo());
-        dash.setMensagemMotivacional("Faltam poucos dias para a prova! Continue firme.");
-        
-        // Aqui futuramente calculamos o desempenho por matéria
-        // Por enquanto vamos retornar a lista vazia só para testar
-        dash.setDesempenhoPorMateria(List.of());
-
+        dash.setMensagemMotivacional("Foco no Banco do Brasil! Continue firme.");
+        dash.setDesempenhoPorMateria(List.of()); // Implementaremos depois
         return ResponseEntity.ok(dash);
     }
 }
