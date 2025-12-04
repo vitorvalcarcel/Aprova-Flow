@@ -35,19 +35,28 @@ public class RegistroEstudoService {
 
     public List<RegistroEstudo> listarDoCicloAtual() {
         Ciclo cicloAtual = cicloService.buscarCicloAtivo();
+        if (cicloAtual == null) {
+            return List.of(); // Retorna lista vazia se não houver ciclo ativo
+        }
         return repository.findByCicloId(cicloAtual.getId());
     }
 
     public String calcularTotalHorasCiclo() {
         List<RegistroEstudo> registros = listarDoCicloAtual();
         
+        if (registros.isEmpty()) {
+            return "00:00";
+        }
+        
         Duration totalDuration = Duration.ZERO;
         
         for (RegistroEstudo r : registros) {
             LocalTime tempo = r.getCargaHoraria();
-            totalDuration = totalDuration.plusHours(tempo.getHour())
-                                         .plusMinutes(tempo.getMinute())
-                                         .plusSeconds(tempo.getSecond());
+            if (tempo != null) {
+                totalDuration = totalDuration.plusHours(tempo.getHour())
+                                             .plusMinutes(tempo.getMinute())
+                                             .plusSeconds(tempo.getSecond());
+            }
         }
 
         long horas = totalDuration.toHours();
