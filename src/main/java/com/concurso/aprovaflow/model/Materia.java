@@ -1,4 +1,4 @@
-package com.concurso.aprovaflow.domain;
+package com.concurso.aprovaflow.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

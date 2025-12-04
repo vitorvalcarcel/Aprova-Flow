@@ -1,4 +1,4 @@
-package com.concurso.aprovaflow.domain;
+package com.concurso.aprovaflow.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
