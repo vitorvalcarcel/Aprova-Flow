@@ -19,12 +19,10 @@ public class RegistroEstudoService {
     @Autowired
     private CicloService cicloService;
 
-    // Salva o estudo e já vincula ao ciclo atual automaticamente
     public RegistroEstudo registrar(RegistroEstudo novoRegistro) {
         Ciclo cicloAtual = cicloService.buscarCicloAtivo();
         novoRegistro.setCiclo(cicloAtual);
         
-        // Validação simples (Regra de Negócio)
         if (novoRegistro.getQuestoesFeitas() != null && novoRegistro.getQuestoesFeitas() > 0) {
             int total = novoRegistro.getQuestoesCertas() + novoRegistro.getQuestoesErradas();
             if (total != novoRegistro.getQuestoesFeitas()) {
@@ -40,7 +38,6 @@ public class RegistroEstudoService {
         return repository.findByCicloId(cicloAtual.getId());
     }
 
-    // Calcula quantas horas (em formato texto HH:mm) você já estudou no ciclo
     public String calcularTotalHorasCiclo() {
         List<RegistroEstudo> registros = listarDoCicloAtual();
         
@@ -59,8 +56,8 @@ public class RegistroEstudoService {
         return String.format("%02d:%02d", horas, minutos);
     }
 
-    public List<RegistroEstudo> listarComFiltros(Long materiaId, Long topicoId, String tipoEstudo, java.time.LocalDate dataInicio, java.time.LocalDate dataFim) {
-        return repository.findWithFilters(materiaId, topicoId, tipoEstudo, dataInicio, dataFim);
+    public List<RegistroEstudo> listarComFiltros(Long materiaId, Long topicoId, Long tipoEstudoId, java.time.LocalDate dataInicio, java.time.LocalDate dataFim) {
+        return repository.findWithFilters(materiaId, topicoId, tipoEstudoId, dataInicio, dataFim);
     }
 
     public RegistroEstudo buscarPorId(Long id) {

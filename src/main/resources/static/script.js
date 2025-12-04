@@ -1,5 +1,6 @@
 const API_URL = "http://localhost:8080";
 let materiasCache = [];
+let tiposEstudoCache = [];
 let registrosGlobais = []; // Cache para edição
 
 // Variáveis do Cronômetro
@@ -11,6 +12,7 @@ let horaInicioTimer = null;
 document.addEventListener("DOMContentLoaded", () => {
     carregarDashboard();
     carregarMaterias();
+    carregarTiposEstudo();
 
     // Define a data de hoje como padrão no Manual
     document.getElementById("manual-data").valueAsDate = new Date();
@@ -106,6 +108,7 @@ function cancelarCronometro() {
 
         document.getElementById('timer-materia').value = "";
         document.getElementById('timer-topico').innerHTML = '<option value="">(Opcional)</option>';
+        document.getElementById('timer-tipo').value = "";
 
         document.getElementById('timer-qFeitas').value = "";
         document.getElementById('timer-qCertas').value = "";
@@ -140,11 +143,15 @@ async function carregarMaterias() {
         const response = await fetch(`${API_URL}/materias`);
         materiasCache = await response.json();
 
-        const selects = ['timer-materia', 'manual-materia', 'filtro-materia', 'edit-materia'];
+        const selects = ['timer-materia', 'manual-materia', 'filtro-materia', 'edit-materia', 'topico-materia-pai'];
 
         selects.forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
+
+            // Preserva valor selecionado se houver
+            const valorAtual = el.value;
+
             el.innerHTML = id.includes('filtro') ? '<option value="">Todas Matérias</option>' : '<option value="">Selecione...</option>';
 
             materiasCache.forEach(m => {
@@ -153,10 +160,46 @@ async function carregarMaterias() {
                 opt.text = m.nome;
                 el.add(opt);
             });
+
+            if (valorAtual) el.value = valorAtual;
         });
+
+        renderizarGerenciarMaterias();
 
     } catch (error) {
         console.error("Erro ao carregar matérias:", error);
+    }
+}
+
+async function carregarTiposEstudo() {
+    try {
+        const response = await fetch(`${API_URL}/tipos-estudo`);
+        tiposEstudoCache = await response.json();
+
+        const selects = ['timer-tipo', 'manual-tipo', 'filtro-tipo', 'edit-tipo'];
+
+        selects.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            const valorAtual = el.value;
+
+            el.innerHTML = id.includes('filtro') ? '<option value="">Todos Tipos</option>' : '<option value="">Selecione...</option>';
+
+            tiposEstudoCache.forEach(t => {
+                let opt = document.createElement("option");
+                opt.value = t.id;
+                opt.text = t.nome;
+                el.add(opt);
+            });
+
+            if (valorAtual) el.value = valorAtual;
+        });
+
+        renderizarGerenciarTipos();
+
+    } catch (error) {
+        console.error("Erro ao carregar tipos:", error);
     }
 }
 
@@ -173,7 +216,7 @@ function carregarTopicos(modo) {
         materiaSelecionada.topicos.forEach(t => {
             let option = document.createElement("option");
             option.value = t.id;
-            option.text = `${t.numeroEdital}. ${t.descricao.substring(0, 50)}...`;
+            option.text = `${t.numeroEdital ? t.numeroEdital + '. ' : ''}${t.descricao.substring(0, 50)}...`;
             selectTopico.add(option);
         });
     }
@@ -201,7 +244,7 @@ async function salvarTimer() {
         horaInicio: horaInicioTimer,
         materiaId: materiaId,
         topicoId: document.getElementById("timer-topico").value || null,
-        tipoEstudo: document.getElementById("timer-tipo").value,
+        tipoEstudoId: document.getElementById("timer-tipo").value, // Agora é ID
         cargaHoraria: getTempoFormatado(),
         questoesFeitas: document.getElementById("timer-qFeitas").value || 0,
         questoesCertas: document.getElementById("timer-qCertas").value || 0,
@@ -220,7 +263,7 @@ async function salvarManual(e) {
         horaInicio: document.getElementById("manual-horaInicio").value + ":00",
         materiaId: document.getElementById("manual-materia").value,
         topicoId: document.getElementById("manual-topico").value || null,
-        tipoEstudo: document.getElementById("manual-tipo").value,
+        tipoEstudoId: document.getElementById("manual-tipo").value, // Agora é ID
         cargaHoraria: document.getElementById("manual-duracao").value,
         questoesFeitas: document.getElementById("manual-qFeitas").value || 0,
         questoesCertas: document.getElementById("manual-qCertas").value || 0,
@@ -276,14 +319,20 @@ function mudarAba(aba) {
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`nav-${aba}`).classList.add('active');
 
+    document.getElementById('sec-dashboard').style.display = 'none';
+    document.getElementById('sec-historico').style.display = 'none';
+    document.getElementById('sec-gerenciar').style.display = 'none';
+
     if (aba === 'dashboard') {
         document.getElementById('sec-dashboard').style.display = 'grid';
-        document.getElementById('sec-historico').style.display = 'none';
         carregarDashboard();
-    } else {
-        document.getElementById('sec-dashboard').style.display = 'none';
+    } else if (aba === 'historico') {
         document.getElementById('sec-historico').style.display = 'block';
         carregarHistorico();
+    } else if (aba === 'gerenciar') {
+        document.getElementById('sec-gerenciar').style.display = 'block';
+        carregarMaterias(); // Recarrega para garantir
+        carregarTiposEstudo();
     }
 }
 
@@ -295,7 +344,7 @@ function atualizarFiltroData() {
         divCustom.style.display = 'flex';
     } else {
         divCustom.style.display = 'none';
-        carregarHistorico(); // Recarrega se mudar de custom para outro
+        carregarHistorico();
     }
 }
 
@@ -305,14 +354,13 @@ async function carregarHistorico() {
 
     const materiaId = document.getElementById('filtro-materia').value;
     const topicoId = document.getElementById('filtro-topico').value;
-    const tipo = document.getElementById('filtro-tipo').value;
+    const tipoId = document.getElementById('filtro-tipo').value;
     const periodo = document.getElementById('filtro-periodo').value;
 
     let dataInicio = null;
     let dataFim = null;
     const hoje = new Date();
 
-    // Lógica de Datas
     if (periodo === 'hoje') {
         dataInicio = hoje.toISOString().split('T')[0];
         dataFim = dataInicio;
@@ -344,12 +392,11 @@ async function carregarHistorico() {
         dataInicio = document.getElementById('filtro-data-inicio').value;
         dataFim = document.getElementById('filtro-data-fim').value;
     }
-    // 'max' não define datas, manda null
 
     const params = new URLSearchParams();
     if (materiaId) params.append('materiaId', materiaId);
     if (topicoId) params.append('topicoId', topicoId);
-    if (tipo) params.append('tipoEstudo', tipo);
+    if (tipoId) params.append('tipoEstudoId', tipoId); // Alterado para ID
     if (dataInicio) params.append('dataInicio', dataInicio);
     if (dataFim) params.append('dataFim', dataFim);
 
@@ -394,7 +441,7 @@ function renderizarTabela(registros) {
                     <div class="history-meta">
                         <span>📅 ${dataFormatada}</span>
                         <span>⏱️ ${r.cargaHoraria}</span>
-                        <span class="tag-tipo">${r.tipoEstudo}</span>
+                        <span class="tag-tipo">${r.tipoEstudo ? r.tipoEstudo.nome : 'N/A'}</span>
                     </div>
                 </div>
                 <div style="text-align:right; display:flex; align-items:center; gap:15px;">
@@ -487,7 +534,7 @@ function fecharModal() {
     document.getElementById('modal-overlay').style.display = 'none';
 }
 
-// --- EDIÇÃO E EXCLUSÃO ---
+// --- EDIÇÃO E EXCLUSÃO REGISTROS ---
 
 async function excluirRegistro(id) {
     confirmarAcao("Tem certeza que deseja excluir este registro permanentemente?", async () => {
@@ -525,7 +572,7 @@ async function abrirModalEdicao(id) {
     document.getElementById('edit-data').value = registro.data;
     document.getElementById('edit-horaInicio').value = registro.horaInicio;
     document.getElementById('edit-duracao').value = registro.cargaHoraria;
-    document.getElementById('edit-tipo').value = registro.tipoEstudo;
+    document.getElementById('edit-tipo').value = registro.tipoEstudo ? registro.tipoEstudo.id : "";
     document.getElementById('edit-qFeitas').value = registro.questoesFeitas;
     document.getElementById('edit-qCertas').value = registro.questoesCertas;
     document.getElementById('edit-anotacoes').value = registro.anotacoes;
@@ -547,7 +594,7 @@ async function salvarEdicao(e) {
         data: document.getElementById('edit-data').value,
         horaInicio: document.getElementById('edit-horaInicio').value,
         cargaHoraria: document.getElementById('edit-duracao').value,
-        tipoEstudo: document.getElementById('edit-tipo').value,
+        tipoEstudoId: document.getElementById('edit-tipo').value,
         questoesFeitas: document.getElementById('edit-qFeitas').value || 0,
         questoesCertas: document.getElementById('edit-qCertas').value || 0,
         anotacoes: document.getElementById('edit-anotacoes').value
@@ -571,4 +618,221 @@ async function salvarEdicao(e) {
         console.error(error);
         mostrarModal("Erro", "Erro de conexão.");
     }
+}
+
+// --- GERENCIAMENTO (CRUD) ---
+
+function renderizarGerenciarMaterias() {
+    const lista = document.getElementById('lista-materias-gerenciar');
+    if (!lista) return;
+    lista.innerHTML = '';
+
+    materiasCache.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'manage-item';
+        item.innerHTML = `
+            <div class="manage-info">
+                <strong>${m.nome}</strong>
+                <small>${m.topicos ? m.topicos.length : 0} tópicos</small>
+            </div>
+            <div class="manage-actions">
+                <button class="btn-icon-action" onclick="abrirModalMateria(${m.id}, '${m.nome}')" title="Editar">
+                    <span class="material-icons">edit</span>
+                </button>
+                <button class="btn-icon-action" onclick="resetarHistoricoMateria(${m.id})" title="Resetar Histórico">
+                    <span class="material-icons">history_toggle_off</span>
+                </button>
+                <button class="btn-icon-action delete" onclick="excluirMateria(${m.id})" title="Excluir">
+                    <span class="material-icons">delete</span>
+                </button>
+            </div>
+        `;
+        lista.appendChild(item);
+    });
+}
+
+function renderizarGerenciarTipos() {
+    const lista = document.getElementById('lista-tipos-gerenciar');
+    if (!lista) return;
+    lista.innerHTML = '';
+
+    tiposEstudoCache.forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'manage-item';
+        item.innerHTML = `
+            <div class="manage-info">
+                <strong>${t.nome}</strong>
+            </div>
+            <div class="manage-actions">
+                <button class="btn-icon-action" onclick="abrirModalTipo(${t.id}, '${t.nome}')" title="Editar">
+                    <span class="material-icons">edit</span>
+                </button>
+                <button class="btn-icon-action delete" onclick="excluirTipo(${t.id})" title="Excluir">
+                    <span class="material-icons">delete</span>
+                </button>
+            </div>
+        `;
+        lista.appendChild(item);
+    });
+}
+
+// Materia CRUD
+function abrirModalMateria(id = null, nome = '') {
+    document.getElementById('materia-id').value = id || '';
+    document.getElementById('materia-nome').value = nome;
+    document.getElementById('modal-materia').style.display = 'flex';
+}
+
+function fecharModalMateria() {
+    document.getElementById('modal-materia').style.display = 'none';
+}
+
+async function salvarMateria(e) {
+    e.preventDefault();
+    const id = document.getElementById('materia-id').value;
+    const nome = document.getElementById('materia-nome').value;
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `${API_URL}/materias/${id}` : `${API_URL}/materias`;
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome })
+        });
+        if (response.ok) {
+            const novaMateria = await response.json();
+            fecharModalMateria();
+            carregarMaterias();
+
+            // Se foi criado via Quick Add no Timer/Manual, seleciona ela
+            if (!id && document.getElementById('timer-materia').offsetParent) {
+                setTimeout(() => {
+                    document.getElementById('timer-materia').value = novaMateria.id;
+                    carregarTopicos('timer');
+                }, 500);
+            }
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function excluirMateria(id) {
+    confirmarAcao("ATENÇÃO: Excluir a matéria apagará TODOS os registros de estudo e tópicos vinculados a ela! Irreversível.", async () => {
+        await fetch(`${API_URL}/materias/${id}`, { method: 'DELETE' });
+        carregarMaterias();
+    });
+}
+
+async function resetarHistoricoMateria(id) {
+    confirmarAcao("Tem certeza? Isso apagará todo o histórico de estudos desta matéria, mas manterá a matéria e tópicos.", async () => {
+        await fetch(`${API_URL}/materias/${id}/historico`, { method: 'DELETE' });
+        mostrarModal("Sucesso", "Histórico resetado.");
+        carregarDashboard();
+    });
+}
+
+// Topico CRUD (Quick Add)
+function abrirModalTopico() {
+    const materiaId = document.getElementById('timer-materia').value || document.getElementById('manual-materia').value;
+    if (!materiaId) {
+        mostrarModal("Atenção", "Selecione uma matéria antes de adicionar um tópico.");
+        return;
+    }
+    document.getElementById('topico-materia-pai').innerHTML = ''; // Limpa
+    // Popula select com a materia selecionada (ou todas)
+    materiasCache.forEach(m => {
+        let opt = document.createElement("option");
+        opt.value = m.id;
+        opt.text = m.nome;
+        document.getElementById('topico-materia-pai').add(opt);
+    });
+    document.getElementById('topico-materia-pai').value = materiaId;
+
+    document.getElementById('topico-id').value = '';
+    document.getElementById('topico-nome').value = '';
+    document.getElementById('topico-numero').value = '';
+    document.getElementById('modal-topico').style.display = 'flex';
+}
+
+function fecharModalTopico() {
+    document.getElementById('modal-topico').style.display = 'none';
+}
+
+async function salvarTopico(e) {
+    e.preventDefault();
+    const materiaId = document.getElementById('topico-materia-pai').value;
+    const nome = document.getElementById('topico-nome').value;
+    const numero = document.getElementById('topico-numero').value;
+
+    const topico = {
+        descricao: nome,
+        numeroEdital: numero,
+        materia: { id: materiaId }
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/topicos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(topico)
+        });
+        if (response.ok) {
+            const novoTopico = await response.json();
+            fecharModalTopico();
+            carregarMaterias(); // Recarrega para atualizar cache de tópicos
+
+            // Auto-seleciona
+            setTimeout(() => {
+                const modo = document.getElementById('mode-timer').style.display !== 'none' ? 'timer' : 'manual';
+                document.getElementById(`${modo}-materia`).value = materiaId;
+                carregarTopicos(modo);
+                document.getElementById(`${modo}-topico`).value = novoTopico.id;
+            }, 500);
+        }
+    } catch (e) { console.error(e); }
+}
+
+// Tipo Estudo CRUD
+function abrirModalTipo(id = null, nome = '') {
+    document.getElementById('tipo-id').value = id || '';
+    document.getElementById('tipo-nome').value = nome;
+    document.getElementById('modal-tipo').style.display = 'flex';
+}
+
+function fecharModalTipo() {
+    document.getElementById('modal-tipo').style.display = 'none';
+}
+
+async function salvarTipo(e) {
+    e.preventDefault();
+    const id = document.getElementById('tipo-id').value;
+    const nome = document.getElementById('tipo-nome').value;
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `${API_URL}/tipos-estudo/${id}` : `${API_URL}/tipos-estudo`;
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome })
+        });
+        if (response.ok) {
+            const novoTipo = await response.json();
+            fecharModalTipo();
+            carregarTiposEstudo();
+
+            if (!id && document.getElementById('timer-tipo').offsetParent) {
+                setTimeout(() => {
+                    document.getElementById('timer-tipo').value = novoTipo.id;
+                }, 200);
+            }
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function excluirTipo(id) {
+    confirmarAcao("ATENÇÃO: Excluir este tipo apagará TODOS os registros vinculados a ele! Irreversível.", async () => {
+        await fetch(`${API_URL}/tipos-estudo/${id}`, { method: 'DELETE' });
+        carregarTiposEstudo();
+    });
 }

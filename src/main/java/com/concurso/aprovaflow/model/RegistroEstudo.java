@@ -19,7 +19,9 @@ public class RegistroEstudo {
 
     private LocalTime cargaHoraria; // Ex: 01:30:00 (Duração)
 
-    private String tipoEstudo; // Videoaula, PDF, Questões...
+    @ManyToOne
+    @JoinColumn(name = "tipo_estudo_id")
+    private TipoEstudo tipoEstudo; // Videoaula, PDF, Questões...
 
     @Column(length = 2000)
     private String anotacoes; // Novo campo: Observações sobre o estudo

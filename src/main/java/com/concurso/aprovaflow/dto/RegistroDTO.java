@@ -7,10 +7,10 @@ import java.time.LocalTime;
 @Data
 public class RegistroDTO {
     private LocalDate data;
-    private LocalTime horaInicio; // Novo
+    private LocalTime horaInicio;
     private String cargaHoraria; // Texto "HH:mm"
-    private String tipoEstudo;
-    private String anotacoes; // Novo
+    private Long tipoEstudoId; // Alterado de String para Long (ID)
+    private String anotacoes;
     private Integer questoesFeitas;
     private Integer questoesCertas;
     private Long materiaId;
