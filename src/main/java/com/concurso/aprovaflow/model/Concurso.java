@@ -20,4 +20,6 @@ public class Concurso {
 
     @OneToMany(mappedBy = "concurso", cascade = CascadeType.ALL)
     private List<Materia> materias = new ArrayList<>();
+
+    private boolean ativo; // Apenas um concurso ativo por vez
 }

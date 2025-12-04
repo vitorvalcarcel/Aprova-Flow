@@ -16,4 +16,8 @@ public class Ciclo {
     private Double horasTotais; // Ex: 12.0
     
     private boolean ativo; // Para saber qual é o ciclo atual
+
+    @ManyToOne
+    @JoinColumn(name = "concurso_id")
+    private Concurso concurso;
 }

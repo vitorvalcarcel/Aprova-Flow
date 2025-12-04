@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8080";
+const API_URL = window.location.origin;
 let materiasCache = [];
 let tiposEstudoCache = [];
 let registrosGlobais = []; // Cache para edição
@@ -10,6 +10,8 @@ let isRodando = false;
 let horaInicioTimer = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+    verificarConcursoAtivo();
+    iniciarHeartbeat();
     carregarDashboard();
     carregarMaterias();
     carregarTiposEstudo();
@@ -28,13 +30,13 @@ document.addEventListener("DOMContentLoaded", () => {
     setupAutocomplete('timer-materia', 'materias');
     setupAutocomplete('timer-topico', 'topicos');
     setupAutocomplete('timer-tipo', 'tipos');
-    
+
     setupAutocomplete('manual-materia', 'materias');
     setupAutocomplete('manual-topico', 'topicos');
     setupAutocomplete('manual-tipo', 'tipos');
 
     // Close autocomplete when clicking outside
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         document.querySelectorAll('.autocomplete-list').forEach(list => {
             if (!list.parentElement.contains(e.target)) {
                 list.style.display = 'none';
@@ -52,7 +54,7 @@ function setupAutocomplete(baseId, type) {
 
     if (!input || !hidden || !list) return;
 
-    input.addEventListener('input', function() {
+    input.addEventListener('input', function () {
         const val = this.value;
         const mode = baseId.split('-')[0]; // timer or manual
 
@@ -70,7 +72,7 @@ function setupAutocomplete(baseId, type) {
         renderAutocompleteList(source, val, list, hidden, input, type);
     });
 
-    input.addEventListener('focus', function() {
+    input.addEventListener('focus', function () {
         // Trigger search on focus to show all or filtered
         const event = new Event('input');
         this.dispatchEvent(event);
@@ -107,7 +109,7 @@ function renderAutocompleteList(source, query, list, hidden, input, type) {
             hidden.value = item.id;
             input.value = item.nome || item.descricao;
             list.style.display = 'none';
-            
+
             // If selecting materia, clear topic
             if (type === 'materias') {
                 const mode = input.id.split('-')[0];
@@ -374,7 +376,7 @@ async function ensureId(mode, type, name) {
 async function salvarTimer() {
     const materiaNome = document.getElementById("timer-materia-input").value;
     const materiaId = await ensureId('timer', 'materia', materiaNome);
-    
+
     if (!materiaId) {
         mostrarModal("Atenção", "Selecione ou crie uma matéria válida!");
         return;
@@ -406,7 +408,7 @@ async function salvarManual(e) {
 
     const materiaNome = document.getElementById("manual-materia-input").value;
     const materiaId = await ensureId('manual', 'materia', materiaNome);
-    
+
     if (!materiaId) {
         mostrarModal("Atenção", "Selecione ou crie uma matéria válida!");
         return;
@@ -799,89 +801,40 @@ async function salvarEdicao(e) {
     }
 }
 
-// --- GERENCIAMENTO (CRUD) ---
+// --- GERENCIAR MATÉRIAS ---
 
 function renderizarGerenciarMaterias() {
     const lista = document.getElementById('lista-materias-gerenciar');
-    if (!lista) return;
     lista.innerHTML = '';
 
     materiasCache.forEach(m => {
         const item = document.createElement('div');
         item.className = 'accordion-item';
-        
-        // Header
-        const header = document.createElement('div');
-        header.className = 'accordion-header';
-        header.innerHTML = `
-            <span>${m.nome}</span>
-            <div class="actions">
-                <span class="material-icons" onclick="event.stopPropagation(); abrirModalMateria(${m.id}, '${m.nome}')">edit</span>
-                <span class="material-icons" onclick="event.stopPropagation(); resetarHistoricoMateria(${m.id})">history_toggle_off</span>
-                <span class="material-icons" onclick="event.stopPropagation(); excluirMateria(${m.id})">delete</span>
-                <span class="material-icons">expand_more</span>
-            </div>
-        `;
-        header.onclick = () => {
-            const wasActive = item.classList.contains('active');
-            document.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
-            if (!wasActive) item.classList.add('active');
-        };
-
-        // Content
-        const content = document.createElement('div');
-        content.className = 'accordion-content';
-        
-        let topicsHtml = '<ul class="topic-list">';
-        if (m.topicos && m.topicos.length > 0) {
-            m.topicos.forEach(t => {
-                topicsHtml += `
-                    <li class="topic-item">
-                        <span>${t.numeroEdital ? t.numeroEdital + '. ' : ''}${t.descricao}</span>
-                        <!-- Future: Add edit/delete for topics -->
-                    </li>
-                `;
-            });
-        } else {
-            topicsHtml += '<li class="topic-item">Nenhum tópico cadastrado.</li>';
-        }
-        topicsHtml += '</ul>';
-        
-        // Add Topic Button inside Accordion
-        topicsHtml += `
-            <button class="btn-add-topic-inline" onclick="abrirModalTopicoInline(${m.id})">
-                + Adicionar Tópico
-            </button>
-        `;
-
-        content.innerHTML = topicsHtml;
-
-        item.appendChild(header);
-        item.appendChild(content);
-        lista.appendChild(item);
-    });
-}
-
-function renderizarGerenciarTipos() {
-    const lista = document.getElementById('lista-tipos-gerenciar');
-    if (!lista) return;
-    lista.innerHTML = '';
-
-    tiposEstudoCache.forEach(t => {
-        const item = document.createElement('div');
-        item.className = 'card-item';
         item.innerHTML = `
-            <strong>${t.nome}</strong>
-            <div class="card-actions">
-                <span class="material-icons" onclick="abrirModalTipo(${t.id}, '${t.nome}')" style="color:#888; cursor:pointer;">edit</span>
-                <span class="material-icons" onclick="excluirTipo(${t.id})" style="color:#dc3545; cursor:pointer;">delete</span>
+            <div class="accordion-header">
+                <span>${m.nome}</span>
+                <div class="actions">
+                    <button class="btn-icon-small" onclick="abrirModalMateria(${m.id}, '${m.nome}')"><span class="material-icons">edit</span></button>
+                    <button class="btn-icon-small delete" onclick="excluirMateria(${m.id})"><span class="material-icons">delete</span></button>
+                    <button class="btn-icon-small" onclick="abrirModalTopico(${m.id})"><span class="material-icons">add</span> Tópico</button>
+                </div>
+            </div>
+            <div class="accordion-body">
+                ${m.topicos ? m.topicos.map(t => `
+                    <div class="topic-item">
+                        <span>${t.numeroEdital ? t.numeroEdital + '. ' : ''}${t.descricao}</span>
+                        <div class="actions">
+                            <button class="btn-icon-small" onclick="abrirModalTopico(${m.id}, ${t.id}, '${t.descricao}', '${t.numeroEdital || ''}')"><span class="material-icons">edit</span></button>
+                            <button class="btn-icon-small delete" onclick="excluirTopico(${t.id})"><span class="material-icons">delete</span></button>
+                        </div>
+                    </div>
+                `).join('') : '<p style="font-size:0.8em; color:#888;">Sem tópicos</p>'}
             </div>
         `;
         lista.appendChild(item);
     });
 }
 
-// Materia CRUD
 function abrirModalMateria(id = null, nome = '') {
     document.getElementById('materia-id').value = id || '';
     document.getElementById('materia-nome').value = nome;
@@ -913,39 +866,31 @@ async function salvarMateria(e) {
 }
 
 async function excluirMateria(id) {
-    confirmarAcao("ATENÇÃO: Excluir a matéria apagará TODOS os registros de estudo e tópicos vinculados a ela! Irreversível.", async () => {
+    confirmarAcao("Excluir matéria apagará todos os tópicos e estudos relacionados. Continuar?", async () => {
         await fetch(`${API_URL}/materias/${id}`, { method: 'DELETE' });
         carregarMaterias();
     });
 }
 
-async function resetarHistoricoMateria(id) {
-    confirmarAcao("Tem certeza? Isso apagará todo o histórico de estudos desta matéria, mas manterá a matéria e tópicos.", async () => {
-        await fetch(`${API_URL}/materias/${id}/historico`, { method: 'DELETE' });
-        mostrarModal("Sucesso", "Histórico resetado.");
-        carregarDashboard();
-    });
-}
+// --- GERENCIAR TÓPICOS ---
 
-// Topico CRUD (Quick Add)
-function abrirModalTopico() {
-    // Legacy support for modal
-    document.getElementById('modal-topico').style.display = 'flex';
-}
+function abrirModalTopico(materiaId, id = null, nome = '', numero = '') {
+    document.getElementById('topico-id').value = id || '';
+    document.getElementById('topico-materia-pai').value = materiaId;
+    document.getElementById('topico-nome').value = nome;
+    document.getElementById('topico-numero').value = numero;
 
-function abrirModalTopicoInline(materiaId) {
-    document.getElementById('topico-materia-pai').innerHTML = '';
-    const m = materiasCache.find(mat => mat.id == materiaId);
-    if(m) {
+    // Preencher select de matérias no modal de tópico
+    const select = document.getElementById('topico-materia-pai');
+    select.innerHTML = '';
+    materiasCache.forEach(m => {
         let opt = document.createElement("option");
         opt.value = m.id;
         opt.text = m.nome;
-        document.getElementById('topico-materia-pai').add(opt);
-    }
-    document.getElementById('topico-materia-pai').value = materiaId;
-    document.getElementById('topico-id').value = '';
-    document.getElementById('topico-nome').value = '';
-    document.getElementById('topico-numero').value = '';
+        select.add(opt);
+    });
+    select.value = materiaId;
+
     document.getElementById('modal-topico').style.display = 'flex';
 }
 
@@ -955,30 +900,53 @@ function fecharModalTopico() {
 
 async function salvarTopico(e) {
     e.preventDefault();
+    const id = document.getElementById('topico-id').value;
     const materiaId = document.getElementById('topico-materia-pai').value;
-    const nome = document.getElementById('topico-nome').value;
-    const numero = document.getElementById('topico-numero').value;
+    const descricao = document.getElementById('topico-nome').value;
+    const numeroEdital = document.getElementById('topico-numero').value;
 
-    const topico = {
-        descricao: nome,
-        numeroEdital: numero,
-        materia: { id: materiaId }
-    };
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `${API_URL}/topicos/${id}` : `${API_URL}/topicos`;
 
     try {
-        const response = await fetch(`${API_URL}/topicos`, {
-            method: 'POST',
+        const response = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(topico)
+            body: JSON.stringify({ descricao, numeroEdital, materia: { id: materiaId } })
         });
         if (response.ok) {
             fecharModalTopico();
-            carregarMaterias(); // Recarrega para atualizar cache de tópicos
+            carregarMaterias(); // Recarrega matérias para atualizar tópicos
         }
     } catch (e) { console.error(e); }
 }
 
-// Tipo Estudo CRUD
+async function excluirTopico(id) {
+    confirmarAcao("Excluir tópico? Estudos vinculados serão perdidos.", async () => {
+        await fetch(`${API_URL}/topicos/${id}`, { method: 'DELETE' });
+        carregarMaterias();
+    });
+}
+
+// --- GERENCIAR TIPOS ---
+
+function renderizarGerenciarTipos() {
+    const lista = document.getElementById('lista-tipos-gerenciar');
+    lista.innerHTML = '';
+    tiposEstudoCache.forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'card-simple';
+        item.innerHTML = `
+            <span>${t.nome}</span>
+            <div class="actions">
+                <button class="btn-icon-small" onclick="abrirModalTipo(${t.id}, '${t.nome}')"><span class="material-icons">edit</span></button>
+                <button class="btn-icon-small delete" onclick="excluirTipo(${t.id})"><span class="material-icons">delete</span></button>
+            </div>
+        `;
+        lista.appendChild(item);
+    });
+}
+
 function abrirModalTipo(id = null, nome = '') {
     document.getElementById('tipo-id').value = id || '';
     document.getElementById('tipo-nome').value = nome;
@@ -1014,4 +982,53 @@ async function excluirTipo(id) {
         await fetch(`${API_URL}/tipos-estudo/${id}`, { method: 'DELETE' });
         carregarTiposEstudo();
     });
+}
+
+// --- NOVAS FUNCIONALIDADES (CONCURSO E HEARTBEAT) ---
+
+async function verificarConcursoAtivo() {
+    try {
+        const response = await fetch(`${API_URL}/concursos/ativo`);
+        if (response.status === 204) { // No Content
+            document.getElementById('modal-concurso').style.display = 'flex';
+        } else {
+            const concurso = await response.json();
+            console.log("Concurso ativo:", concurso.nome);
+            document.title = `AprovaFlow - ${concurso.nome}`;
+        }
+    } catch (e) {
+        console.error("Erro ao verificar concurso:", e);
+    }
+}
+
+async function salvarConcursoInicial(e) {
+    e.preventDefault();
+    const nome = document.getElementById('concurso-nome-inicial').value;
+
+    try {
+        const response = await fetch(`${API_URL}/concursos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome })
+        });
+
+        if (response.ok) {
+            document.getElementById('modal-concurso').style.display = 'none';
+            carregarDashboard(); // Recarrega para pegar o ciclo novo
+            window.location.reload(); // Recarrega tudo para garantir
+        } else {
+            alert("Erro ao criar concurso.");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Erro de conexão.");
+    }
+}
+
+function iniciarHeartbeat() {
+    setInterval(() => {
+        fetch(`${API_URL}/system/heartbeat`, { method: 'POST' }).catch(() => {
+            // Ignora erros de conexão no heartbeat
+        });
+    }, 5000);
 }
