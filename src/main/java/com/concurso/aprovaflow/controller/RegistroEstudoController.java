@@ -82,7 +82,7 @@ public class RegistroEstudoController {
     public ResponseEntity<DashboardDTO> getDashboard() {
         DashboardDTO dash = new DashboardDTO();
         dash.setTotalHorasCiclo(registroService.calcularTotalHorasCiclo());
-        dash.setMensagemMotivacional("Foco no Banco do Brasil! Continue firme.");
+        dash.setMensagemMotivacional("Bons estudos! Continue firme.");
         dash.setDesempenhoPorMateria(List.of()); 
         return ResponseEntity.ok(dash);
     }
