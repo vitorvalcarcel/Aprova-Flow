@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,179 +8,286 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
+
 <body>
 
-    <div class="container">
-        
-        <header class="dash-header">
-            <div class="dash-info">
-                <h2>📊 Status do Ciclo</h2>
-                <div class="dash-metrics">
-                    <div class="metric-card">
-                        <span class="label">Horas Totais</span>
-                        <strong id="lblHoras">--:--</strong>
-                    </div>
-                    <div class="metric-card highlight">
-                        <span class="label">Mensagem</span>
-                        <strong id="lblMensagem" style="font-size: 0.9em;">Carregando...</strong>
-                    </div>
-                </div>
-            </div>
-        </header>
+    <div class="app-container">
 
-        <main class="study-session">
-            <div class="session-header">
-                <h3>⏱️ Registrar Estudo</h3>
-                
-                <div class="toggle-mode">
-                    <button class="mode-btn active" onclick="mudarModo('timer')">Cronômetro</button>
-                    <button class="mode-btn" onclick="mudarModo('manual')">Manual</button>
-                </div>
-            </div>
+        <!-- Sidebar / Navigation -->
+        <nav class="sidebar">
+            <h2>AprovaFlow</h2>
+            <button class="nav-btn active" id="nav-dashboard" onclick="mudarAba('dashboard')">
+                <span class="material-icons">dashboard</span> Dashboard
+            </button>
+            <button class="nav-btn" id="nav-historico" onclick="mudarAba('historico')">
+                <span class="material-icons">history</span> Histórico
+            </button>
+        </nav>
 
-            <div id="mode-timer" class="input-mode">
-                
-                <div id="timer-setup">
-                    <div class="form-group">
-                        <label>O que vamos estudar agora?</label>
-                        <select id="timer-materia" required onchange="carregarTopicos('timer')">
-                            <option value="">Selecione a Matéria...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <select id="timer-topico">
-                            <option value="">(Opcional) Selecione o Tópico...</option>
-                        </select>
-                    </div>
-                </div>
+        <!-- Main Content Area -->
+        <main class="main-content">
 
-                <div class="timer-display">
-                    <span id="display-horas">00</span>:<span id="display-minutos">00</span>:<span id="display-segundos">00</span>
-                </div>
-                
-                <div class="timer-controls">
-                    <button type="button" id="btnStart" class="btn-control play" onclick="iniciarCronometro()">
-                        <span class="material-icons">play_arrow</span> Iniciar Estudo
-                    </button>
-                    
-                    <button type="button" id="btnPause" class="btn-control pause" onclick="pausarCronometro()" style="display:none;">
-                        <span class="material-icons">pause</span> Pausar
-                    </button>
-                </div>
-                <p class="timer-status" id="statusTimer">Escolha a matéria e dê o play!</p>
+            <!-- DASHBOARD SECTION -->
+            <section id="sec-dashboard" class="dashboard-grid">
 
-                <div id="timer-details" style="display: none; background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px solid #e0e0e0;">
-                    <h4 style="margin-top:0; color: #555;">Detalhes da Sessão</h4>
-                    
-                    <div class="form-group">
-                        <label>Tipo de Estudo</label>
-                        <select id="timer-tipo">
-                            <option value="Videoaula">Vídeo Aula</option>
-                            <option value="PDF">Leitura PDF</option>
-                            <option value="Questões">Questões</option>
-                            <option value="Revisão">Revisão</option>
-                        </select>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Qtd. Feitas</label>
-                            <input type="number" id="timer-qFeitas" min="0" placeholder="0">
+                <!-- Left Column: Metrics & Charts (Future) -->
+                <div class="dash-left">
+                    <header class="dash-header">
+                        <div class="dash-info">
+                            <h2>📊 Status do Ciclo</h2>
+                            <div class="dash-metrics">
+                                <div class="metric-card">
+                                    <span class="label">Horas Totais</span>
+                                    <strong id="lblHoras">--:--</strong>
+                                </div>
+                                <div class="metric-card highlight">
+                                    <span class="label">Mensagem</span>
+                                    <strong id="lblMensagem" style="font-size: 0.9em;">Carregando...</strong>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Qtd. Certas</label>
-                            <input type="number" id="timer-qCertas" min="0" placeholder="0">
+                    </header>
+
+                    <div class="placeholder-chart"
+                        style="background: white; padding: 20px; border-radius: 15px; text-align: center; color: #888; margin-top: 20px;">
+                        <span class="material-icons" style="font-size: 4rem; opacity: 0.2;">bar_chart</span>
+                        <p>Gráficos e Estatísticas virão aqui...</p>
+                    </div>
+                </div>
+
+                <!-- Right Column: Study Registration -->
+                <div class="dash-right">
+                    <div class="study-session compact">
+                        <div class="session-header">
+                            <h3>⏱️ Registrar Estudo</h3>
+
+                            <div class="toggle-mode">
+                                <button class="mode-btn active" onclick="mudarModo('timer')">Timer</button>
+                                <button class="mode-btn" onclick="mudarModo('manual')">Manual</button>
+                            </div>
+                        </div>
+
+                        <div id="mode-timer" class="input-mode">
+
+                            <div id="timer-setup">
+                                <div class="form-group">
+                                    <select id="timer-materia" onchange="carregarTopicos('timer')">
+                                        <option value="">Selecione a Matéria...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <select id="timer-topico">
+                                        <option value="">(Opcional) Tópico...</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="timer-display">
+                                <span id="display-horas">00</span>:<span id="display-minutos">00</span>:<span
+                                    id="display-segundos">00</span>
+                            </div>
+
+                            <div class="timer-controls">
+                                <button type="button" id="btnStart" class="btn-control play"
+                                    onclick="iniciarCronometro()">
+                                    <span class="material-icons">play_arrow</span> Iniciar
+                                </button>
+
+                                <button type="button" id="btnPause" class="btn-control pause"
+                                    onclick="pausarCronometro()" style="display:none;">
+                                    <span class="material-icons">pause</span> Pausar
+                                </button>
+                            </div>
+                            <p class="timer-status" id="statusTimer">Bora estudar?</p>
+
+                            <div id="timer-details" style="display: none;">
+                                <div class="form-group">
+                                    <select id="timer-tipo">
+                                        <option value="Videoaula">Vídeo Aula</option>
+                                        <option value="PDF">Leitura PDF</option>
+                                        <option value="Questões">Questões</option>
+                                        <option value="Revisão">Revisão</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <input type="number" id="timer-qFeitas" min="0" placeholder="Qtd. Feitas">
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="number" id="timer-qCertas" min="0" placeholder="Qtd. Certas">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <textarea id="timer-anotacoes" rows="2" placeholder="Anotações..."></textarea>
+                                </div>
+
+                                <div class="timer-actions">
+                                    <button type="button" class="btn-cancel" onclick="cancelarCronometro()">
+                                        <span class="material-icons">delete</span>
+                                    </button>
+                                    <button type="button" class="btn-continue" onclick="continuarCronometro()">
+                                        <span class="material-icons">play_arrow</span>
+                                    </button>
+                                    <button type="button" class="btn-save-timer" onclick="salvarTimer()">
+                                        <span class="material-icons">save</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="formManual" onsubmit="salvarManual(event)" style="display: none;">
+                            <div class="form-group">
+                                <select id="manual-materia" required onchange="carregarTopicos('manual')">
+                                    <option value="">Matéria...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select id="manual-topico">
+                                    <option value="">(Opcional) Tópico...</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <input type="date" id="manual-data" required>
+                                <input type="time" id="manual-horaInicio" required>
+                            </div>
+                            <div class="form-row">
+                                <input type="time" id="manual-duracao" required>
+                                <select id="manual-tipo" required>
+                                    <option value="Videoaula">Vídeo Aula</option>
+                                    <option value="PDF">Leitura PDF</option>
+                                    <option value="Questões">Questões</option>
+                                    <option value="Revisão">Revisão</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <input type="number" id="manual-qFeitas" min="0" placeholder="Feitas">
+                                <input type="number" id="manual-qCertas" min="0" placeholder="Certas">
+                            </div>
+                            <div class="form-group">
+                                <textarea id="manual-anotacoes" rows="2" placeholder="Observações..."></textarea>
+                            </div>
+                            <button type="submit" class="btn-save">
+                                <span class="material-icons">save</span> Salvar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HISTORY SECTION -->
+            <section id="sec-historico" style="display: none;">
+                <div class="history-container">
+                    <div class="history-header-box">
+                        <h3>📜 Histórico de Estudos</h3>
+                        <div class="filter-bar">
+                            <select id="filtro-materia" onchange="carregarTopicos('filtro')">
+                                <option value="">Todas Matérias</option>
+                            </select>
+                            <select id="filtro-topico">
+                                <option value="">Todos Tópicos</option>
+                            </select>
+                            <select id="filtro-tipo">
+                                <option value="">Todos Tipos</option>
+                                <option value="Videoaula">Vídeo Aula</option>
+                                <option value="PDF">Leitura PDF</option>
+                                <option value="Questões">Questões</option>
+                                <option value="Revisão">Revisão</option>
+                            </select>
+                            <input type="date" id="filtro-data">
+                            <button class="btn-filter" onclick="carregarHistorico()">
+                                <span class="material-icons">filter_list</span>
+                            </button>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Anotações</label>
-                        <textarea id="timer-anotacoes" rows="2" placeholder="Ex: Dúvida na lei tal..."></textarea>
-                    </div>
-
-                    <div class="timer-actions" style="display: flex; gap: 10px; margin-top: 15px;">
-                        <button type="button" class="btn-cancel" onclick="cancelarCronometro()">
-                            <span class="material-icons">delete</span> Descartar
-                        </button>
-                        <button type="button" class="btn-continue" onclick="continuarCronometro()">
-                            <span class="material-icons">play_arrow</span> Continuar
-                        </button>
-                        <button type="button" class="btn-save-timer" onclick="salvarTimer()">
-                            <span class="material-icons">save</span> Salvar
-                        </button>
+                    <div id="lista-historico" class="history-list">
+                        <p style="text-align:center; color:#888;">Carregando...</p>
                     </div>
                 </div>
-            </div>
-
-            <form id="formManual" onsubmit="salvarManual(event)" style="display: none;">
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Matéria</label>
-                        <select id="manual-materia" required onchange="carregarTopicos('manual')">
-                            <option value="">Selecione...</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Conteúdo (Tópico)</label>
-                    <select id="manual-topico">
-                        <option value="">(Opcional)</option>
-                    </select>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Data</label>
-                        <input type="date" id="manual-data" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Hora Início</label>
-                        <input type="time" id="manual-horaInicio" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Duração (HH:mm)</label>
-                        <input type="time" id="manual-duracao" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Tipo</label>
-                        <select id="manual-tipo" required>
-                            <option value="Videoaula">Vídeo Aula</option>
-                            <option value="PDF">Leitura PDF</option>
-                            <option value="Questões">Questões</option>
-                            <option value="Revisão">Revisão</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Qtd. Feitas</label>
-                        <input type="number" id="manual-qFeitas" min="0" placeholder="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Qtd. Certas</label>
-                        <input type="number" id="manual-qCertas" min="0" placeholder="0">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Anotações</label>
-                    <textarea id="manual-anotacoes" rows="2" placeholder="Observações..."></textarea>
-                </div>
-
-                <button type="submit" class="btn-save">
-                    <span class="material-icons">save</span> Salvar Registro Manual
-                </button>
-            </form>
+            </section>
 
         </main>
     </div>
 
+    <!-- MODALS -->
+
+    <!-- Alert/Confirm Modal -->
+    <div id="modal-overlay" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h3 id="modal-title">Atenção</h3>
+            <p id="modal-message">Mensagem aqui...</p>
+            <div class="modal-actions" id="modal-actions">
+                <button class="btn-modal-ok" onclick="fecharModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="modal-edit" class="modal-overlay" style="display: none;">
+        <div class="modal-box large">
+            <h3>✏️ Editar Registro</h3>
+            <form id="formEdit" onsubmit="salvarEdicao(event)">
+                <input type="hidden" id="edit-id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Matéria</label>
+                        <select id="edit-materia" required onchange="carregarTopicos('edit')"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tópico</label>
+                        <select id="edit-topico"></select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="date" id="edit-data" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora Início</label>
+                        <input type="time" id="edit-horaInicio" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Duração</label>
+                        <input type="time" id="edit-duracao" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="edit-tipo" required>
+                            <option value="Videoaula">Vídeo Aula</option>
+                            <option value="PDF">Leitura PDF</option>
+                            <option value="Questões">Questões</option>
+                            <option value="Revisão">Revisão</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Feitas</label>
+                        <input type="number" id="edit-qFeitas" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Certas</label>
+                        <input type="number" id="edit-qCertas" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Anotações</label>
+                    <textarea id="edit-anotacoes" rows="2"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="fecharModalEdit()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
+
 </html>

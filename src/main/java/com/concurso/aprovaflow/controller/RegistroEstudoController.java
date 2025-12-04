@@ -80,4 +80,54 @@ public class RegistroEstudoController {
         dash.setDesempenhoPorMateria(List.of()); 
         return ResponseEntity.ok(dash);
     }
+
+    @GetMapping
+    public List<RegistroEstudo> listar(
+            @RequestParam(required = false) Long materiaId,
+            @RequestParam(required = false) Long topicoId,
+            @RequestParam(required = false) String tipoEstudo,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate data
+    ) {
+        return registroService.listarComFiltros(materiaId, topicoId, tipoEstudo, data);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<RegistroEstudo> atualizar(@PathVariable Long id, @RequestBody RegistroDTO dto) {
+        RegistroEstudo existente = registroService.buscarPorId(id);
+        
+        existente.setData(dto.getData());
+        existente.setHoraInicio(dto.getHoraInicio());
+        existente.setTipoEstudo(dto.getTipoEstudo());
+        existente.setAnotacoes(dto.getAnotacoes());
+        existente.setQuestoesFeitas(dto.getQuestoesFeitas());
+        existente.setQuestoesCertas(dto.getQuestoesCertas());
+        
+        if (dto.getQuestoesFeitas() != null && dto.getQuestoesCertas() != null) {
+            existente.setQuestoesErradas(dto.getQuestoesFeitas() - dto.getQuestoesCertas());
+        }
+
+        String horaFormatada = dto.getCargaHoraria().length() == 5 ? dto.getCargaHoraria() + ":00" : dto.getCargaHoraria();
+        existente.setCargaHoraria(LocalTime.parse(horaFormatada));
+
+        var materia = materiaService.listarTodas().stream()
+                .filter(m -> m.getId().equals(dto.getMateriaId()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Matéria não encontrada"));
+        existente.setMateria(materia);
+
+        if (dto.getTopicoId() != null) {
+            var topico = topicoRepository.findById(dto.getTopicoId()).orElse(null);
+            existente.setTopico(topico);
+        } else {
+            existente.setTopico(null);
+        }
+
+        return ResponseEntity.ok(registroService.atualizar(existente));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        registroService.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -5,12 +5,12 @@ let materiasCache = [];
 let timerInterval;
 let segundosTotais = 0;
 let isRodando = false;
-let horaInicioTimer = null; // Para armazenar quando começou o timer
+let horaInicioTimer = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     carregarDashboard();
-    carregarMaterias(); // Carrega para ambas as listas (manual e timer)
-    
+    carregarMaterias();
+
     // Define a data de hoje como padrão no Manual
     document.getElementById("manual-data").valueAsDate = new Date();
 });
@@ -18,15 +18,13 @@ document.addEventListener("DOMContentLoaded", () => {
 // --- LÓGICA DE ABAS ---
 function mudarModo(modo) {
     if (isRodando && modo === 'manual') {
-        alert("Pause ou pare o cronômetro antes de trocar de modo!");
+        mostrarModal("Atenção", "Pause ou pare o cronômetro antes de trocar de modo!");
         return;
     }
 
-    // Atualiza visual dos botões
     document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
 
-    // Mostra/Esconde os painéis
     if (modo === 'timer') {
         document.getElementById('mode-timer').style.display = 'block';
         document.getElementById('formManual').style.display = 'none';
@@ -38,29 +36,23 @@ function mudarModo(modo) {
 
 // --- LÓGICA DO CRONÔMETRO ---
 function iniciarCronometro() {
-    const materia = document.getElementById('timer-materia').value;
-    if (!materia) {
-        alert("Selecione uma matéria antes de iniciar!");
-        return;
-    }
+    // REMOVIDO: Validação obrigatória de matéria no início
 
     if (isRodando) return;
-    
-    // Se for a primeira vez iniciando (não é uma retomada de pausa), grava a hora
+
     if (segundosTotais === 0) {
         const agora = new Date();
-        horaInicioTimer = agora.toTimeString().split(' ')[0]; // Formato HH:mm:ss
+        horaInicioTimer = agora.toTimeString().split(' ')[0];
     }
 
     isRodando = true;
-    
-    // UI Updates
+
     document.getElementById('btnStart').style.display = 'none';
     document.getElementById('btnPause').style.display = 'flex';
-    document.getElementById('timer-setup').style.opacity = '0.5'; // Deixa cinza pra indicar que travou
-    document.getElementById('timer-setup').style.pointerEvents = 'none'; // Bloqueia clicks
-    document.getElementById('timer-details').style.display = 'none'; // Garante que detalhes sumam
-    
+    document.getElementById('timer-setup').style.opacity = '0.5';
+    document.getElementById('timer-setup').style.pointerEvents = 'none';
+    document.getElementById('timer-details').style.display = 'none';
+
     document.getElementById('statusTimer').innerText = "Estudando... Foco!";
     document.getElementById('statusTimer').style.color = "#003399";
 
@@ -73,12 +65,10 @@ function iniciarCronometro() {
 function pausarCronometro() {
     isRodando = false;
     clearInterval(timerInterval);
-    
-    // UI Updates
-    document.getElementById('btnStart').style.display = 'none'; // Esconde botão iniciar
-    document.getElementById('btnPause').style.display = 'none'; // Esconde botão pause
-    
-    // Mostra painel de detalhes
+
+    document.getElementById('btnStart').style.display = 'none';
+    document.getElementById('btnPause').style.display = 'none';
+
     document.getElementById('timer-details').style.display = 'block';
 
     document.getElementById('statusTimer').innerText = "Pausado - Preencha os dados abaixo";
@@ -86,11 +76,10 @@ function pausarCronometro() {
 }
 
 function continuarCronometro() {
-    // Retoma o timer e esconde os detalhes
     isRodando = true;
     document.getElementById('timer-details').style.display = 'none';
     document.getElementById('btnPause').style.display = 'flex';
-    
+
     document.getElementById('statusTimer').innerText = "Estudando... Foco!";
     document.getElementById('statusTimer').style.color = "#003399";
 
@@ -101,32 +90,29 @@ function continuarCronometro() {
 }
 
 function cancelarCronometro() {
-    if(!confirm("Tem certeza que deseja descartar esse tempo de estudo?")) return;
+    confirmarAcao("Tem certeza que deseja descartar esse tempo de estudo?", () => {
+        isRodando = false;
+        clearInterval(timerInterval);
+        segundosTotais = 0;
+        horaInicioTimer = null;
+        atualizarDisplayTimer();
 
-    isRodando = false;
-    clearInterval(timerInterval);
-    segundosTotais = 0;
-    horaInicioTimer = null;
-    atualizarDisplayTimer();
-    
-    // Reseta UI
-    document.getElementById('timer-details').style.display = 'none';
-    document.getElementById('btnStart').style.display = 'flex';
-    document.getElementById('btnPause').style.display = 'none';
-    
-    // Libera setup
-    document.getElementById('timer-setup').style.opacity = '1';
-    document.getElementById('timer-setup').style.pointerEvents = 'auto';
-    document.getElementById('timer-materia').value = "";
-    document.getElementById('timer-topico').innerHTML = '<option value="">(Opcional)</option>';
+        document.getElementById('timer-details').style.display = 'none';
+        document.getElementById('btnStart').style.display = 'flex';
+        document.getElementById('btnPause').style.display = 'none';
 
-    // Limpa inputs do timer
-    document.getElementById('timer-qFeitas').value = "";
-    document.getElementById('timer-qCertas').value = "";
-    document.getElementById('timer-anotacoes').value = "";
+        document.getElementById('timer-setup').style.opacity = '1';
+        document.getElementById('timer-setup').style.pointerEvents = 'auto';
+        document.getElementById('timer-materia').value = "";
+        document.getElementById('timer-topico').innerHTML = '<option value="">(Opcional)</option>';
 
-    document.getElementById('statusTimer').innerText = "Escolha a matéria e dê o play!";
-    document.getElementById('statusTimer').style.color = "#888";
+        document.getElementById('timer-qFeitas').value = "";
+        document.getElementById('timer-qCertas').value = "";
+        document.getElementById('timer-anotacoes').value = "";
+
+        document.getElementById('statusTimer').innerText = "Bora estudar?";
+        document.getElementById('statusTimer').style.color = "#888";
+    });
 }
 
 function atualizarDisplayTimer() {
@@ -139,7 +125,6 @@ function atualizarDisplayTimer() {
     document.getElementById('display-segundos').innerText = String(segundos).padStart(2, '0');
 }
 
-// Converte segundos para string "HH:mm"
 function getTempoFormatado() {
     const horas = Math.floor(segundosTotais / 3600);
     const minutos = Math.floor((segundosTotais % 3600) / 60);
@@ -152,27 +137,22 @@ async function carregarMaterias() {
     try {
         const response = await fetch(`${API_URL}/materias`);
         materiasCache = await response.json();
-        
-        const selectTimer = document.getElementById("timer-materia");
-        const selectManual = document.getElementById("manual-materia");
-        
-        // Limpa
-        selectTimer.innerHTML = '<option value="">Selecione a Matéria...</option>';
-        selectManual.innerHTML = '<option value="">Selecione...</option>';
-        
-        materiasCache.forEach(m => {
-            // Popula Timer
-            let opt1 = document.createElement("option");
-            opt1.value = m.id;
-            opt1.text = m.nome;
-            selectTimer.add(opt1);
 
-            // Popula Manual
-            let opt2 = document.createElement("option");
-            opt2.value = m.id;
-            opt2.text = m.nome;
-            selectManual.add(opt2);
+        const selects = ['timer-materia', 'manual-materia', 'filtro-materia', 'edit-materia'];
+
+        selects.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerHTML = id.includes('filtro') ? '<option value="">Todas Matérias</option>' : '<option value="">Selecione...</option>';
+
+            materiasCache.forEach(m => {
+                let opt = document.createElement("option");
+                opt.value = m.id;
+                opt.text = m.nome;
+                el.add(opt);
+            });
         });
+
     } catch (error) {
         console.error("Erro ao carregar matérias:", error);
     }
@@ -181,8 +161,9 @@ async function carregarMaterias() {
 function carregarTopicos(modo) {
     const idMateria = document.getElementById(`${modo}-materia`).value;
     const selectTopico = document.getElementById(`${modo}-topico`);
-    selectTopico.innerHTML = '<option value="">(Opcional) Selecione...</option>';
-    
+
+    selectTopico.innerHTML = modo === 'filtro' ? '<option value="">Todos Tópicos</option>' : '<option value="">(Opcional) Selecione...</option>';
+
     if (!idMateria) return;
 
     const materiaSelecionada = materiasCache.find(m => m.id == idMateria);
@@ -208,14 +189,21 @@ async function carregarDashboard() {
 // --- SALVAR TIMER ---
 async function salvarTimer() {
     if (segundosTotais < 60) {
-        alert("Estude pelo menos 1 minuto para registrar! 😉");
+        mostrarModal("Atenção", "Estude pelo menos 1 minuto para registrar! 😉");
+        return;
+    }
+
+    // Validação Tardia: Matéria Obrigatória
+    const materiaId = document.getElementById("timer-materia").value;
+    if (!materiaId) {
+        mostrarModal("Atenção", "Selecione a matéria antes de salvar!");
         return;
     }
 
     const registro = {
-        data: new Date().toISOString().split('T')[0], // Hoje
+        data: new Date().toISOString().split('T')[0],
         horaInicio: horaInicioTimer,
-        materiaId: document.getElementById("timer-materia").value,
+        materiaId: materiaId,
         topicoId: document.getElementById("timer-topico").value || null,
         tipoEstudo: document.getElementById("timer-tipo").value,
         cargaHoraria: getTempoFormatado(),
@@ -233,7 +221,7 @@ async function salvarManual(e) {
 
     const registro = {
         data: document.getElementById("manual-data").value,
-        horaInicio: document.getElementById("manual-horaInicio").value + ":00", // Adiciona segundos para compatibilidade
+        horaInicio: document.getElementById("manual-horaInicio").value + ":00",
         materiaId: document.getElementById("manual-materia").value,
         topicoId: document.getElementById("manual-topico").value || null,
         tipoEstudo: document.getElementById("manual-tipo").value,
@@ -256,25 +244,22 @@ async function enviarRegistro(registro, isTimer) {
         });
 
         if (response.ok) {
-            alert(`✅ Estudo salvo com sucesso!\nTempo: ${registro.cargaHoraria}`);
+            mostrarModal("Sucesso", `Estudo salvo com sucesso!\nTempo: ${registro.cargaHoraria}`);
             carregarDashboard();
-            
+
             if (isTimer) {
-                // Reseta Timer mas sem pedir confirmação pois já salvou
                 isRodando = false;
                 clearInterval(timerInterval);
                 segundosTotais = 0;
                 horaInicioTimer = null;
                 atualizarDisplayTimer();
-                
-                // Reseta UI Timer
+
                 document.getElementById('timer-details').style.display = 'none';
                 document.getElementById('btnStart').style.display = 'flex';
                 document.getElementById('timer-setup').style.opacity = '1';
                 document.getElementById('timer-setup').style.pointerEvents = 'auto';
-                document.getElementById('statusTimer').innerText = "Pronto para o próximo!";
-                
-                // Limpa campos
+                document.getElementById('statusTimer').innerText = "Bora estudar?";
+
                 document.getElementById('timer-qFeitas').value = "";
                 document.getElementById('timer-qCertas').value = "";
                 document.getElementById('timer-anotacoes').value = "";
@@ -283,10 +268,313 @@ async function enviarRegistro(registro, isTimer) {
                 document.getElementById("manual-data").valueAsDate = new Date();
             }
         } else {
-            alert("Erro ao salvar. Verifique os dados.");
+            mostrarModal("Erro", "Erro ao salvar. Verifique os dados.");
         }
     } catch (error) {
         console.error(error);
-        alert("Erro de conexão.");
+        mostrarModal("Erro", "Erro de conexão.");
+    }
+}
+
+// --- HISTÓRICO E NAVEGAÇÃO ---
+
+function mudarAba(aba) {
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`nav-${aba}`).classList.add('active');
+
+    if (aba === 'dashboard') {
+        document.getElementById('sec-dashboard').style.display = 'grid';
+        document.getElementById('sec-historico').style.display = 'none';
+        carregarDashboard();
+    } else {
+        document.getElementById('sec-dashboard').style.display = 'none';
+        document.getElementById('sec-historico').style.display = 'block';
+        carregarHistorico();
+    }
+}
+
+async function carregarHistorico() {
+    const lista = document.getElementById('lista-historico');
+    lista.innerHTML = '<p style="text-align:center; color:#888;">Carregando...</p>';
+
+    const materiaId = document.getElementById('filtro-materia').value;
+    const topicoId = document.getElementById('filtro-topico').value;
+    const tipo = document.getElementById('filtro-tipo').value;
+    const data = document.getElementById('filtro-data').value;
+
+    const params = new URLSearchParams();
+    if (materiaId) params.append('materiaId', materiaId);
+    if (topicoId) params.append('topicoId', topicoId);
+    if (tipo) params.append('tipoEstudo', tipo);
+    if (data) params.append('data', data);
+
+    try {
+        const response = await fetch(`${API_URL}/estudos?${params.toString()}`);
+        const registros = await response.json();
+        renderizarTabela(registros);
+    } catch (error) {
+        console.error(error);
+        lista.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar histórico.</p>';
+    }
+}
+
+function renderizarTabela(registros) {
+    const lista = document.getElementById('lista-historico');
+    lista.innerHTML = '';
+
+    if (registros.length === 0) {
+        lista.innerHTML = '<p style="text-align:center; color:#888;">Nenhum registro encontrado.</p>';
+        return;
+    }
+
+    registros.forEach(r => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.id = `registro-${r.id}`;
+
+        const dataFormatada = r.data.split('-').reverse().join('/');
+
+        let desempenho = '';
+        if (r.questoesFeitas > 0) {
+            const pct = Math.round((r.questoesCertas / r.questoesFeitas) * 100);
+            let cor = pct >= 80 ? 'green' : (pct >= 50 ? 'orange' : 'red');
+            desempenho = `<span style="color:${cor}; font-weight:bold;">${pct}% Acerto</span>`;
+        }
+
+        item.innerHTML = `
+            <div class="history-summary" onclick="toggleDetalhes(${r.id})">
+                <div class="history-info">
+                    <span class="history-materia">${r.materia.nome}</span>
+                    <span class="history-topico">${r.topico ? r.topico.descricao : 'Sem tópico'}</span>
+                    <div class="history-meta">
+                        <span>📅 ${dataFormatada}</span>
+                        <span>⏱️ ${r.cargaHoraria}</span>
+                        <span class="tag-tipo">${r.tipoEstudo}</span>
+                    </div>
+                </div>
+                <div style="text-align:right; display:flex; align-items:center; gap:15px;">
+                    ${desempenho}
+                    <span class="material-icons expand-icon" id="icon-${r.id}">expand_more</span>
+                </div>
+            </div>
+            <div id="detalhes-${r.id}" class="history-details">
+                <div class="detail-row">
+                    <span class="detail-label">Hora Início:</span>
+                    <span class="detail-value">${r.horaInicio || '--:--'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Questões:</span>
+                    <span class="detail-value">${r.questoesCertas}/${r.questoesFeitas}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Anotações:</span>
+                    <span class="detail-value" style="font-weight:normal; font-style:italic;">"${r.anotacoes || 'Sem anotações'}"</span>
+                </div>
+                <div class="history-actions">
+                    <button class="btn-icon-action" onclick="abrirModalEdicao(${r.id})">
+                        <span class="material-icons">edit</span> Editar
+                    </button>
+                    <button class="btn-icon-action delete" onclick="excluirRegistro(${r.id})">
+                        <span class="material-icons">delete</span> Excluir
+                    </button>
+                </div>
+            </div>
+        `;
+        lista.appendChild(item);
+    });
+}
+
+function toggleDetalhes(id) {
+    const item = document.getElementById(`registro-${id}`);
+    const details = document.getElementById(`detalhes-${id}`);
+
+    if (details.style.display === 'block') {
+        details.style.display = 'none';
+        item.classList.remove('open');
+    } else {
+        details.style.display = 'block';
+        item.classList.add('open');
+        // Scroll suave
+        setTimeout(() => {
+            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
+}
+
+// --- MODAIS CUSTOMIZADOS ---
+
+function mostrarModal(titulo, mensagem) {
+    document.getElementById('modal-title').innerText = titulo;
+    document.getElementById('modal-message').innerText = mensagem;
+
+    // Limpa ações e adiciona botão OK
+    const actions = document.getElementById('modal-actions');
+    actions.innerHTML = '<button class="btn-modal-ok" onclick="fecharModal()">OK</button>';
+
+    document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+function confirmarAcao(mensagem, callback) {
+    document.getElementById('modal-title').innerText = "Confirmação";
+    document.getElementById('modal-message').innerText = mensagem;
+
+    const actions = document.getElementById('modal-actions');
+    actions.innerHTML = '';
+
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'btn-modal-cancel';
+    btnCancel.innerText = 'Cancelar';
+    btnCancel.onclick = fecharModal;
+
+    const btnOk = document.createElement('button');
+    btnOk.className = 'btn-modal-ok';
+    btnOk.innerText = 'Confirmar';
+    btnOk.onclick = () => {
+        fecharModal();
+        callback();
+    };
+
+    actions.appendChild(btnCancel);
+    actions.appendChild(btnOk);
+
+    document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+function fecharModal() {
+    document.getElementById('modal-overlay').style.display = 'none';
+}
+
+// --- EDIÇÃO E EXCLUSÃO ---
+
+async function excluirRegistro(id) {
+    confirmarAcao("Tem certeza que deseja excluir este registro permanentemente?", async () => {
+        try {
+            const response = await fetch(`${API_URL}/estudos/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                mostrarModal("Sucesso", "Registro excluído!");
+                carregarHistorico();
+            } else {
+                mostrarModal("Erro", "Não foi possível excluir.");
+            }
+        } catch (e) {
+            console.error(e);
+            mostrarModal("Erro", "Erro de conexão.");
+        }
+    });
+}
+
+let registroEmEdicaoId = null;
+
+async function abrirModalEdicao(id) {
+    // Busca dados atuais do registro (poderia pegar do cache, mas melhor garantir)
+    // Como não temos endpoint GET /id, vamos pegar do cache da tabela se possível ou implementar
+    // Para simplificar, vamos pegar do DOM ou fazer um find no array se tivéssemos guardado
+    // Vamos fazer um truque: recarregar o histórico traz tudo. Vamos assumir que os dados estão na tela? Não.
+    // O ideal seria ter um GET /estudos/{id}. Mas como não pedi isso no backend, 
+    // vou usar os dados que já tenho no front se eu salvar em uma variável global ou...
+    // ESPERA! Eu adicionei GET /estudos com filtros. Posso filtrar por ID? Não.
+    // Vou adicionar um endpoint GET /estudos/{id} no backend? Não, o usuário não pediu explicitamente, mas é bom.
+    // Mas espere, eu tenho `buscarPorId` no service e controller? Sim, eu adicionei `atualizar` e `excluir`. 
+    // Faltou o GET /estudos/{id} no Controller!
+    // Vou usar os dados que estão no HTML? Não, muito ruim.
+    // Vou adicionar o endpoint GET /estudos/{id} agora? Sim, é melhor.
+    // ... Pensando bem, eu já editei o controller e service. Vou assumir que posso adicionar mais um endpoint rápido ou
+    // tentar pegar os dados de outra forma.
+    // Ah, eu tenho a lista `registros` no `carregarHistorico`. Vou salvar ela numa variável global.
+
+    // Solução rápida: Salvar lista global
+    const registro = registrosGlobais.find(r => r.id === id);
+    if (!registro) return;
+
+    registroEmEdicaoId = id;
+    document.getElementById('edit-id').value = id;
+
+    // Popula campos
+    document.getElementById('edit-materia').value = registro.materia.id;
+    carregarTopicos('edit'); // Carrega tópicos da matéria
+
+    // Pequeno delay para tópicos carregarem
+    setTimeout(() => {
+        if (registro.topico) document.getElementById('edit-topico').value = registro.topico.id;
+    }, 100);
+
+    document.getElementById('edit-data').value = registro.data;
+    document.getElementById('edit-horaInicio').value = registro.horaInicio;
+    document.getElementById('edit-duracao').value = registro.cargaHoraria;
+    document.getElementById('edit-tipo').value = registro.tipoEstudo;
+    document.getElementById('edit-qFeitas').value = registro.questoesFeitas;
+    document.getElementById('edit-qCertas').value = registro.questoesCertas;
+    document.getElementById('edit-anotacoes').value = registro.anotacoes;
+
+    document.getElementById('modal-edit').style.display = 'flex';
+}
+
+function fecharModalEdit() {
+    document.getElementById('modal-edit').style.display = 'none';
+    registroEmEdicaoId = null;
+}
+
+async function salvarEdicao(e) {
+    e.preventDefault();
+
+    const registro = {
+        materiaId: document.getElementById('edit-materia').value,
+        topicoId: document.getElementById('edit-topico').value || null,
+        data: document.getElementById('edit-data').value,
+        horaInicio: document.getElementById('edit-horaInicio').value, // Pode precisar ajustar segundos
+        cargaHoraria: document.getElementById('edit-duracao').value,
+        tipoEstudo: document.getElementById('edit-tipo').value,
+        questoesFeitas: document.getElementById('edit-qFeitas').value || 0,
+        questoesCertas: document.getElementById('edit-qCertas').value || 0,
+        anotacoes: document.getElementById('edit-anotacoes').value
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/estudos/${registroEmEdicaoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(registro)
+        });
+
+        if (response.ok) {
+            mostrarModal("Sucesso", "Registro atualizado!");
+            fecharModalEdit();
+            carregarHistorico();
+        } else {
+            mostrarModal("Erro", "Erro ao atualizar.");
+        }
+    } catch (error) {
+        console.error(error);
+        mostrarModal("Erro", "Erro de conexão.");
+    }
+}
+
+// Variável global para auxiliar na edição
+let registrosGlobais = [];
+
+// Sobrescrevendo carregarHistorico para salvar na global
+const carregarHistoricoOriginal = carregarHistorico;
+carregarHistorico = async function () {
+    const lista = document.getElementById('lista-historico');
+    lista.innerHTML = '<p style="text-align:center; color:#888;">Carregando...</p>';
+
+    const materiaId = document.getElementById('filtro-materia').value;
+    const topicoId = document.getElementById('filtro-topico').value;
+    const tipo = document.getElementById('filtro-tipo').value;
+    const data = document.getElementById('filtro-data').value;
+
+    const params = new URLSearchParams();
+    if (materiaId) params.append('materiaId', materiaId);
+    if (topicoId) params.append('topicoId', topicoId);
+    if (tipo) params.append('tipoEstudo', tipo);
+    if (data) params.append('data', data);
+
+    try {
+        const response = await fetch(`${API_URL}/estudos?${params.toString()}`);
+        registrosGlobais = await response.json(); // Salva na global
+        renderizarTabela(registrosGlobais);
+    } catch (error) {
+        console.error(error);
+        lista.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar histórico.</p>';
     }
 }

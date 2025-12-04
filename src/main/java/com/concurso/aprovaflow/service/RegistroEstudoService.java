@@ -58,4 +58,20 @@ public class RegistroEstudoService {
         
         return String.format("%02d:%02d", horas, minutos);
     }
+
+    public List<RegistroEstudo> listarComFiltros(Long materiaId, Long topicoId, String tipoEstudo, java.time.LocalDate data) {
+        return repository.findWithFilters(materiaId, topicoId, tipoEstudo, data);
+    }
+
+    public RegistroEstudo buscarPorId(Long id) {
+        return repository.findById(id).orElseThrow(() -> new RuntimeException("Registro não encontrado"));
+    }
+
+    public RegistroEstudo atualizar(RegistroEstudo registro) {
+        return repository.save(registro);
+    }
+
+    public void excluir(Long id) {
+        repository.deleteById(id);
+    }
 }
