@@ -71,11 +71,13 @@
 
                             <div id="timer-setup">
                                 <div class="form-group">
+                                    <label>Matéria</label>
                                     <select id="timer-materia" onchange="carregarTopicos('timer')">
                                         <option value="">Selecione a Matéria...</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
+                                    <label>Assunto / Tópico</label>
                                     <select id="timer-topico">
                                         <option value="">(Opcional) Tópico...</option>
                                     </select>
@@ -102,6 +104,7 @@
 
                             <div id="timer-details" style="display: none;">
                                 <div class="form-group">
+                                    <label>Tipo de Estudo</label>
                                     <select id="timer-tipo">
                                         <option value="Videoaula">Vídeo Aula</option>
                                         <option value="PDF">Leitura PDF</option>
@@ -112,14 +115,17 @@
 
                                 <div class="form-row">
                                     <div class="form-group">
+                                        <label>Questões Feitas</label>
                                         <input type="number" id="timer-qFeitas" min="0" placeholder="Qtd. Feitas">
                                     </div>
                                     <div class="form-group">
+                                        <label>Questões Certas</label>
                                         <input type="number" id="timer-qCertas" min="0" placeholder="Qtd. Certas">
                                     </div>
                                 </div>
 
                                 <div class="form-group">
+                                    <label>Anotações</label>
                                     <textarea id="timer-anotacoes" rows="2" placeholder="Anotações..."></textarea>
                                 </div>
 
@@ -139,33 +145,54 @@
 
                         <form id="formManual" onsubmit="salvarManual(event)" style="display: none;">
                             <div class="form-group">
+                                <label>Matéria</label>
                                 <select id="manual-materia" required onchange="carregarTopicos('manual')">
                                     <option value="">Matéria...</option>
                                 </select>
                             </div>
                             <div class="form-group">
+                                <label>Assunto / Tópico</label>
                                 <select id="manual-topico">
                                     <option value="">(Opcional) Tópico...</option>
                                 </select>
                             </div>
                             <div class="form-row">
-                                <input type="date" id="manual-data" required>
-                                <input type="time" id="manual-horaInicio" required>
+                                <div class="form-group">
+                                    <label>Data</label>
+                                    <input type="date" id="manual-data" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Hora Início</label>
+                                    <input type="time" id="manual-horaInicio" required>
+                                </div>
                             </div>
                             <div class="form-row">
-                                <input type="time" id="manual-duracao" required>
-                                <select id="manual-tipo" required>
-                                    <option value="Videoaula">Vídeo Aula</option>
-                                    <option value="PDF">Leitura PDF</option>
-                                    <option value="Questões">Questões</option>
-                                    <option value="Revisão">Revisão</option>
-                                </select>
+                                <div class="form-group">
+                                    <label>Duração</label>
+                                    <input type="time" id="manual-duracao" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Tipo</label>
+                                    <select id="manual-tipo" required>
+                                        <option value="Videoaula">Vídeo Aula</option>
+                                        <option value="PDF">Leitura PDF</option>
+                                        <option value="Questões">Questões</option>
+                                        <option value="Revisão">Revisão</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="form-row">
-                                <input type="number" id="manual-qFeitas" min="0" placeholder="Feitas">
-                                <input type="number" id="manual-qCertas" min="0" placeholder="Certas">
+                                <div class="form-group">
+                                    <label>Feitas</label>
+                                    <input type="number" id="manual-qFeitas" min="0" placeholder="Feitas">
+                                </div>
+                                <div class="form-group">
+                                    <label>Certas</label>
+                                    <input type="number" id="manual-qCertas" min="0" placeholder="Certas">
+                                </div>
                             </div>
                             <div class="form-group">
+                                <label>Anotações</label>
                                 <textarea id="manual-anotacoes" rows="2" placeholder="Observações..."></textarea>
                             </div>
                             <button type="submit" class="btn-save">
@@ -196,7 +223,7 @@
                                 <option value="Revisão">Revisão</option>
                             </select>
                             <input type="date" id="filtro-data">
-                            <button class="btn-filter" onclick="carregarHistorico()">
+                            <button class="btn-filter" onclick="carregarHistorico()" style="display:none;">
                                 <span class="material-icons">filter_list</span>
                             </button>
                         </div>
@@ -280,7 +307,7 @@
                     <textarea id="edit-anotacoes" rows="2"></textarea>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="fecharModalEdit()">Cancelar</button>
+                    <button type="button" class="btn-modal-cancel" onclick="fecharModalEdit()">Cancelar</button>
                     <button type="submit" class="btn-save">Salvar Alterações</button>
                 </div>
             </form>

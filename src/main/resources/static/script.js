@@ -13,6 +13,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Define a data de hoje como padrão no Manual
     document.getElementById("manual-data").valueAsDate = new Date();
+
+    // Auto-filter listeners
+    ['filtro-materia', 'filtro-topico', 'filtro-tipo', 'filtro-data'].forEach(id => {
+        document.getElementById(id).addEventListener('change', carregarHistorico);
+    });
 });
 
 // --- LÓGICA DE ABAS ---
@@ -49,8 +54,9 @@ function iniciarCronometro() {
 
     document.getElementById('btnStart').style.display = 'none';
     document.getElementById('btnPause').style.display = 'flex';
-    document.getElementById('timer-setup').style.opacity = '0.5';
-    document.getElementById('timer-setup').style.pointerEvents = 'none';
+    // REMOVIDO: Bloqueio de edição (Req 1)
+    // document.getElementById('timer-setup').style.opacity = '0.5';
+    // document.getElementById('timer-setup').style.pointerEvents = 'none';
     document.getElementById('timer-details').style.display = 'none';
 
     document.getElementById('statusTimer').innerText = "Estudando... Foco!";
@@ -101,8 +107,8 @@ function cancelarCronometro() {
         document.getElementById('btnStart').style.display = 'flex';
         document.getElementById('btnPause').style.display = 'none';
 
-        document.getElementById('timer-setup').style.opacity = '1';
-        document.getElementById('timer-setup').style.pointerEvents = 'auto';
+        // document.getElementById('timer-setup').style.opacity = '1';
+        // document.getElementById('timer-setup').style.pointerEvents = 'auto';
         document.getElementById('timer-materia').value = "";
         document.getElementById('timer-topico').innerHTML = '<option value="">(Opcional)</option>';
 
@@ -128,7 +134,8 @@ function atualizarDisplayTimer() {
 function getTempoFormatado() {
     const horas = Math.floor(segundosTotais / 3600);
     const minutos = Math.floor((segundosTotais % 3600) / 60);
-    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
+    const segundos = segundosTotais % 60;
+    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
 }
 
 // --- API E DADOS ---
@@ -188,10 +195,11 @@ async function carregarDashboard() {
 
 // --- SALVAR TIMER ---
 async function salvarTimer() {
-    if (segundosTotais < 60) {
+    // REMOVIDO: Validação de 1 minuto (Req 2)
+    /* if (segundosTotais < 60) {
         mostrarModal("Atenção", "Estude pelo menos 1 minuto para registrar! 😉");
         return;
-    }
+    } */
 
     // Validação Tardia: Matéria Obrigatória
     const materiaId = document.getElementById("timer-materia").value;
@@ -256,8 +264,8 @@ async function enviarRegistro(registro, isTimer) {
 
                 document.getElementById('timer-details').style.display = 'none';
                 document.getElementById('btnStart').style.display = 'flex';
-                document.getElementById('timer-setup').style.opacity = '1';
-                document.getElementById('timer-setup').style.pointerEvents = 'auto';
+                // document.getElementById('timer-setup').style.opacity = '1';
+                // document.getElementById('timer-setup').style.pointerEvents = 'auto';
                 document.getElementById('statusTimer').innerText = "Bora estudar?";
 
                 document.getElementById('timer-qFeitas').value = "";
