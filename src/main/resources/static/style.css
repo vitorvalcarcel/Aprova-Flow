@@ -1,0 +1,17 @@
+body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; }
+.container { max-width: 600px; margin: 0 auto; }
+
+header { text-align: center; margin-bottom: 30px; color: #003399; } /* Azul BB */
+
+.dashboard-cards { display: flex; gap: 15px; margin-bottom: 30px; }
+.card { background: white; padding: 20px; border-radius: 10px; flex: 1; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.card h1 { color: #f8d32d; margin: 10px 0; } /* Amarelo BB */
+
+.form-section { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.form-group { margin-bottom: 15px; }
+.form-row { display: flex; gap: 10px; }
+label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+
+.btn-save { width: 100%; background-color: #003399; color: white; padding: 12px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: 0.3s; }
+.btn-save:hover { background-color: #002266; }

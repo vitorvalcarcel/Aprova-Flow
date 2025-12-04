@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AprovaFlow - BB TI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🚀 AprovaFlow</h1>
+            <p>Foco no Banco do Brasil (Agente de TI)</p>
+        </header>
+
+        <section class="dashboard-cards">
+            <div class="card">
+                <h3>Tempo no Ciclo</h3>
+                <h1 id="lblHoras">--:--</h1>
+                <p id="lblMensagem">Carregando...</p>
+            </div>
+            </section>
+
+        <section class="form-section">
+            <h2>📝 Registrar Estudo</h2>
+            <form id="formEstudo">
+                
+                <div class="form-group">
+                    <label>Data:</label>
+                    <input type="date" id="data" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Matéria:</label>
+                    <select id="materia" required onchange="carregarTopicos()">
+                        <option value="">Selecione...</option>
+                        </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Tópico (Opcional):</label>
+                    <select id="topico">
+                        <option value="">Selecione a matéria primeiro...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Carga Horária (HH:mm):</label>
+                    <input type="time" id="carga" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo:</label>
+                    <select id="tipo" required onchange="toggleQuestoes()">
+                        <option value="Videoaula">Vídeo Aula</option>
+                        <option value="PDF">Leitura PDF</option>
+                        <option value="Questões">Resolução de Questões</option>
+                        <option value="Revisão">Revisão</option>
+                    </select>
+                </div>
+
+                <div id="areaQuestoes" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Feitas:</label>
+                            <input type="number" id="qFeitas" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Certas:</label>
+                            <input type="number" id="qCertas" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save">Salvar Estudo</button>
+            </form>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
