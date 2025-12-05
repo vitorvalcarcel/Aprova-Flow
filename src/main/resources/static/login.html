@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AprovaFlow - Login</title>
+    <link rel="stylesheet" href="css/pages/login.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="login-container">
+        <div class="login-header">
+            <h2>AprovaFlow</h2>
+            <p>Sua jornada rumo à aprovação começa aqui.</p>
+        </div>
+
+        <div id="alert-error" class="alert-error"></div>
+        <div id="alert-success" class="alert-success"></div>
+
+        <!-- Login Form -->
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Usuário</label>
+                <input type="text" id="username" placeholder="Digite seu usuário" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" placeholder="Digite sua senha" required>
+            </div>
+            <button type="submit" class="btn-login" id="btn-login-submit">Entrar</button>
+            <div class="toggle-link">
+                Ainda não tem conta? <a onclick="showRegister()">Cadastre-se</a>
+            </div>
+        </form>
+
+        <!-- Register Form (Hidden by default) -->
+        <form id="register-form" style="display: none;">
+            <div class="form-group">
+                <label for="reg-username">Usuário</label>
+                <input type="text" id="reg-username" placeholder="Escolha um usuário" required>
+            </div>
+            <div class="form-group">
+                <label for="reg-password">Senha</label>
+                <input type="password" id="reg-password" placeholder="Escolha uma senha" required>
+            </div>
+            <div class="form-group">
+                <label for="reg-password-confirm">Confirmar Senha</label>
+                <input type="password" id="reg-password-confirm" placeholder="Confirme sua senha" required>
+            </div>
+            <button type="submit" class="btn-login" id="btn-reg-submit">Criar Conta</button>
+            <div class="toggle-link">
+                Já tem conta? <a onclick="showLogin()">Faça Login</a>
+            </div>
+        </form>
+    </div>
+
+    <script src="js/heartbeat.js"></script>
+    <script src="js/login.js"></script>
+</body>
+
+</html>

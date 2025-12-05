@@ -1,0 +1,148 @@
+/* css/pages/login.css */
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f7f6;
+    /* --bg-color */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    /* --text-color */
+    margin: 0;
+}
+
+.login-container {
+    background: #ffffff;
+    /* --white */
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* --shadow */
+    text-align: center;
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-header h2 {
+    font-size: 2rem;
+    margin-bottom: 5px;
+    color: #003399;
+    /* --primary (Banco do Brasil Blue) */
+}
+
+.login-header p {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 0.95rem;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.9rem;
+    color: #003399;
+    /* --primary */
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    color: #333;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #ff9800;
+    /* --secondary (Gold) */
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+}
+
+.btn-login {
+    width: 100%;
+    padding: 12px;
+    background: #003399;
+    /* --primary */
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 10px;
+}
+
+.btn-login:hover {
+    background: #002266;
+    /* Darker Blue */
+}
+
+.toggle-link {
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.toggle-link a {
+    color: #003399;
+    /* --primary */
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.toggle-link a:hover {
+    text-decoration: underline;
+    color: #ff9800;
+    /* --secondary */
+}
+
+.alert-error,
+.alert-success {
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    display: none;
+    font-weight: 500;
+}
+
+.alert-error {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}
+
+.alert-success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}

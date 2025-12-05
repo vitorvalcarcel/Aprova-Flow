@@ -43,7 +43,8 @@ window.salvarConcursoInicial = salvarConcursoInicial;
 
 document.addEventListener("DOMContentLoaded", () => {
     verificarConcursoAtivo();
-    iniciarHeartbeat();
+    verificarConcursoAtivo();
+    // Heartbeat movido para script separado
     carregarDashboard();
     carregarMaterias();
     carregarTiposEstudo();
@@ -140,10 +141,4 @@ async function salvarConcursoInicial(e) {
     }
 }
 
-function iniciarHeartbeat() {
-    setInterval(() => {
-        fetch(`${API_URL}/system/heartbeat`, { method: 'POST' }).catch(() => {
-            // Ignora erros de conexão no heartbeat
-        });
-    }, 5000);
-}
+
