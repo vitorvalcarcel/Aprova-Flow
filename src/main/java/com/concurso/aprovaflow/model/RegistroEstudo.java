@@ -1,5 +1,6 @@
 package com.concurso.aprovaflow.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
@@ -15,16 +16,16 @@ public class RegistroEstudo {
 
     private LocalDate data;
 
-    private LocalTime horaInicio; // Novo campo: Hora que começou a estudar
+    private LocalTime horaInicio;
 
-    private LocalTime cargaHoraria; // Ex: 01:30:00 (Duração)
+    private LocalTime cargaHoraria;
 
     @ManyToOne
     @JoinColumn(name = "tipo_estudo_id")
-    private TipoEstudo tipoEstudo; // Videoaula, PDF, Questões...
+    private TipoEstudo tipoEstudo;
 
     @Column(length = 2000)
-    private String anotacoes; // Novo campo: Observações sobre o estudo
+    private String anotacoes;
 
     private Integer questoesFeitas;
     
@@ -44,7 +45,11 @@ public class RegistroEstudo {
     @JoinColumn(name = "ciclo_id")
     private Ciclo ciclo;
     
-    // Método auxiliar para calcular % de acerto automaticamente se quiser
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private User user;
+
     public Double getPercentualAcerto() {
         if (questoesFeitas == null || questoesFeitas == 0) return 0.0;
         return (double) questoesCertas / questoesFeitas * 100;

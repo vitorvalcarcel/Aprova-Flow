@@ -2,8 +2,11 @@ package com.concurso.aprovaflow.service;
 
 import com.concurso.aprovaflow.model.Ciclo;
 import com.concurso.aprovaflow.model.RegistroEstudo;
+import com.concurso.aprovaflow.model.User;
 import com.concurso.aprovaflow.repository.RegistroEstudoRepository;
+import com.concurso.aprovaflow.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -18,10 +21,19 @@ public class RegistroEstudoService {
 
     @Autowired
     private CicloService cicloService;
+    
+    @Autowired
+    private UserRepository userRepository;
+
+    private User getUsuarioLogado() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email).orElseThrow();
+    }
 
     public RegistroEstudo registrar(RegistroEstudo novoRegistro) {
         Ciclo cicloAtual = cicloService.buscarCicloAtivo();
         novoRegistro.setCiclo(cicloAtual);
+        novoRegistro.setUser(getUsuarioLogado()); // VINCULA AO USUÁRIO
         
         if (novoRegistro.getQuestoesFeitas() != null && novoRegistro.getQuestoesFeitas() > 0) {
             int total = novoRegistro.getQuestoesCertas() + novoRegistro.getQuestoesErradas();
@@ -36,9 +48,9 @@ public class RegistroEstudoService {
     public List<RegistroEstudo> listarDoCicloAtual() {
         Ciclo cicloAtual = cicloService.buscarCicloAtivo();
         if (cicloAtual == null) {
-            return List.of(); // Retorna lista vazia se não houver ciclo ativo
+            return List.of();
         }
-        return repository.findByCicloId(cicloAtual.getId());
+        return repository.findByCicloIdAndUser(cicloAtual.getId(), getUsuarioLogado());
     }
 
     public String calcularTotalHorasCiclo() {
@@ -66,7 +78,8 @@ public class RegistroEstudoService {
     }
 
     public List<RegistroEstudo> listarComFiltros(Long materiaId, Long topicoId, Long tipoEstudoId, java.time.LocalDate dataInicio, java.time.LocalDate dataFim) {
-        return repository.findWithFilters(materiaId, topicoId, tipoEstudoId, dataInicio, dataFim);
+        // Passamos o ID do usuário para o filtro
+        return repository.findWithFilters(getUsuarioLogado().getId(), materiaId, topicoId, tipoEstudoId, dataInicio, dataFim);
     }
 
     public RegistroEstudo buscarPorId(Long id) {
@@ -74,6 +87,10 @@ public class RegistroEstudoService {
     }
 
     public RegistroEstudo atualizar(RegistroEstudo registro) {
+        // Garante que não perde o usuário na atualização
+        if(registro.getUser() == null) {
+            registro.setUser(getUsuarioLogado());
+        }
         return repository.save(registro);
     }
 

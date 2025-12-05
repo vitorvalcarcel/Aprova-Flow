@@ -14,17 +14,22 @@ public class Materia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nome; // Ex: Tecnologia da Informação
+    private String nome;
 
-    private Double peso; // Ex: 1.5
+    private Double peso;
 
-    private Integer qtdQuestoesProva; // Ex: 35
+    private Integer qtdQuestoesProva;
 
     @ManyToOne
     @JoinColumn(name = "concurso_id")
-    @JsonIgnore // Evita loop infinito ao gerar JSON
+    @JsonIgnore
     private Concurso concurso;
 
     @OneToMany(mappedBy = "materia", cascade = CascadeType.ALL)
     private List<Topico> topicos = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private User user;
 }

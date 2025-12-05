@@ -12,14 +12,13 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    // Should be in application.properties in production. Using a secure default for dev.
-    // Must be at least 256 bits (32 bytes)
-    private static final String JWT_SECRET = "9a4f2c8d3b7a1e6f4c5d8e0s1d2f3g4h5j6k7l8m9n0b1v2c3x4z5a6s7d8f9g0h"; 
-    
-    private static final long JWT_EXPIRATION_MS = 86400000; // 1 day
+    @Value("${app.jwtSecret}")
+    private String jwtSecret;
+
+    private static final long JWT_EXPIRATION_MS = 86400000; // 1 dia
 
     private Key key() {
-        return Keys.hmacShaKeyFor(JWT_SECRET.getBytes());
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
     public String generateToken(Authentication authentication) {
@@ -50,13 +49,13 @@ public class JwtTokenProvider {
             Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(authToken);
             return true;
         } catch (SecurityException | MalformedJwtException e) {
-            // Invalid JWT signature
+            // Assinatura inválida
         } catch (ExpiredJwtException e) {
-            // Expired JWT token
+            // Token expirado
         } catch (UnsupportedJwtException e) {
-            // Unsupported JWT token
+            // Token não suportado
         } catch (IllegalArgumentException e) {
-            // JWT claims string is empty
+            // String vazia
         }
         return false;
     }

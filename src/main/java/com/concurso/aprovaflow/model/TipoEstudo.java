@@ -1,5 +1,7 @@
 package com.concurso.aprovaflow.model;
 
+import com.concurso.aprovaflow.model.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -11,5 +13,10 @@ public class TipoEstudo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nome; // Ex: Videoaula, PDF, Questões...
+    private String nome;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private User user;
 }

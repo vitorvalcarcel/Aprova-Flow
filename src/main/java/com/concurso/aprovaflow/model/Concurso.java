@@ -1,12 +1,13 @@
 package com.concurso.aprovaflow.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data // Gera Getters, Setters, toString, etc. automaticamente
+@Data
 @Entity
 public class Concurso {
 
@@ -14,12 +15,17 @@ public class Concurso {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nome; // Ex: Banco do Brasil 2026
+    private String nome;
 
     private LocalDate dataProva;
 
     @OneToMany(mappedBy = "concurso", cascade = CascadeType.ALL)
     private List<Materia> materias = new ArrayList<>();
 
-    private boolean ativo; // Apenas um concurso ativo por vez
+    private boolean ativo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private User user;
 }
