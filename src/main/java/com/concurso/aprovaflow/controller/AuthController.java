@@ -37,7 +37,7 @@ public class AuthController {
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
+                        loginRequest.getEmail(),
                         loginRequest.getPassword()
                 )
         );
@@ -49,17 +49,26 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody SignUpRequest signUpRequest) {
-        if (userRepository.findByUsername(signUpRequest.getUsername()).isPresent()) {
-            return new ResponseEntity<>("Username is already taken!", HttpStatus.BAD_REQUEST);
+        if (userRepository.findByEmail(signUpRequest.getEmail()).isPresent()) {
+            return new ResponseEntity<>("Email já está em uso!", HttpStatus.BAD_REQUEST);
+        }
+
+        // Validação de Senha Forte
+        String password = signUpRequest.getPassword();
+        // Regex: Min 8, Lower, Upper, Digit, Special (Any non-alphanumeric), No Whitespace
+        String passwordPattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?=\\S+$).{8,}$";
+        
+        if (!password.matches(passwordPattern)) {
+            return new ResponseEntity<>("A senha deve ter no mínimo 8 caracteres, contendo maiúscula, minúscula, número e caractere especial.", HttpStatus.BAD_REQUEST);
         }
 
         User user = new User();
-        user.setUsername(signUpRequest.getUsername());
+        user.setEmail(signUpRequest.getEmail());
         user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
         user.setRole("USER");
 
         userRepository.save(user);
 
-        return new ResponseEntity<>("User registered successfully", HttpStatus.OK);
+        return new ResponseEntity<>("Usuário registrado com sucesso", HttpStatus.OK);
     }
 }

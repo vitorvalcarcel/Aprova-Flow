@@ -57,6 +57,32 @@ body {
     text-align: left;
 }
 
+.input-icon-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon-container input {
+    padding-right: 40px;
+    /* Space for icon */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    color: #003399;
+    /* Primary color */
+    user-select: none;
+    font-size: 1.2rem;
+}
+
+.toggle-password:hover {
+    color: #ff9800;
+    /* Secondary color */
+}
+
 .form-group label {
     display: block;
     font-size: 0.9rem;

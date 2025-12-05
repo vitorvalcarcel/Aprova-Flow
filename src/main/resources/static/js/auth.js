@@ -57,3 +57,10 @@
         }
     }
 })();
+
+window.logout = function () {
+    if (confirm("Deseja realmente sair?")) {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    }
+};

@@ -7,6 +7,7 @@
     <title>AprovaFlow - Login</title>
     <link rel="stylesheet" href="css/pages/login.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 
 <body>
@@ -23,14 +24,22 @@
         <!-- Login Form -->
         <form id="login-form">
             <div class="form-group">
-                <label for="username">Usuário</label>
-                <input type="text" id="username" placeholder="Digite seu usuário" required>
+                <label for="email">E-mail</label>
+                <input type="email" id="email" placeholder="Digite seu e-mail" required>
             </div>
-            <div class="form-group">
+            <div class="form-group password-wrapper">
                 <label for="password">Senha</label>
-                <input type="password" id="password" placeholder="Digite sua senha" required>
+                <div class="input-icon-container">
+                    <input type="password" id="password" placeholder="Digite sua senha" required>
+                    <span class="material-icons toggle-password"
+                        onclick="togglePassword('password', this)">visibility</span>
+                </div>
             </div>
             <button type="submit" class="btn-login" id="btn-login-submit">Entrar</button>
+            <button type="button" class="btn-login" id="btn-test-login" onclick="loginTestUser()"
+                style="background-color: #4CAF50; margin-top: 10px;">
+                🧪 Login Teste (Auto)
+            </button>
             <div class="toggle-link">
                 Ainda não tem conta? <a onclick="showRegister()">Cadastre-se</a>
             </div>
@@ -39,16 +48,28 @@
         <!-- Register Form (Hidden by default) -->
         <form id="register-form" style="display: none;">
             <div class="form-group">
-                <label for="reg-username">Usuário</label>
-                <input type="text" id="reg-username" placeholder="Escolha um usuário" required>
+                <label for="reg-email">E-mail</label>
+                <input type="email" id="reg-email" placeholder="Seu melhor e-mail" required>
             </div>
-            <div class="form-group">
+            <div class="form-group password-wrapper">
                 <label for="reg-password">Senha</label>
-                <input type="password" id="reg-password" placeholder="Escolha uma senha" required>
+                <div class="input-icon-container">
+                    <input type="password" id="reg-password" placeholder="Senha forte (Min 8 chars, A-Z, 0-9, special)"
+                        required>
+                    <span class="material-icons toggle-password"
+                        onclick="togglePassword('reg-password', this)">visibility</span>
+                </div>
+                <small style="color: #666; font-size: 0.8em; display:block; margin-top:5px;">
+                    Mínimo 8 caracteres, maiúscula, minúscula, número e especial.
+                </small>
             </div>
-            <div class="form-group">
+            <div class="form-group password-wrapper">
                 <label for="reg-password-confirm">Confirmar Senha</label>
-                <input type="password" id="reg-password-confirm" placeholder="Confirme sua senha" required>
+                <div class="input-icon-container">
+                    <input type="password" id="reg-password-confirm" placeholder="Confirme sua senha" required>
+                    <span class="material-icons toggle-password"
+                        onclick="togglePassword('reg-password-confirm', this)">visibility</span>
+                </div>
             </div>
             <button type="submit" class="btn-login" id="btn-reg-submit">Criar Conta</button>
             <div class="toggle-link">
