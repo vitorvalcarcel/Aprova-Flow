@@ -36,4 +36,29 @@ public class ConcursoController {
         Concurso novo = service.criarConcurso(nome);
         return ResponseEntity.ok(novo);
     }
+
+    @GetMapping
+    public ResponseEntity<Iterable<Concurso>> listar() {
+        return ResponseEntity.ok(service.listarConcursos());
+    }
+
+    @PutMapping("/{id}/ativo")
+    public ResponseEntity<?> ativar(@PathVariable Long id) {
+        try {
+            service.ativarConcurso(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> excluir(@PathVariable Long id) {
+         try {
+            service.excluirConcurso(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

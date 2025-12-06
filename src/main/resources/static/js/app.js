@@ -3,6 +3,7 @@ import { mostrarModal, confirmarAcao, fecharModal } from './modules/utils.js';
 import { carregarDashboard, mudarModo, iniciarCronometro, pausarCronometro, continuarCronometro, cancelarCronometro, salvarTimer, salvarManual } from './modules/dashboard.js';
 import { carregarHistorico, atualizarFiltroData, toggleDetalhes, abrirModalEdicao, fecharModalEdit, salvarEdicao, excluirRegistro } from './modules/history.js';
 import { carregarMaterias, carregarTiposEstudo, toggleAccordion, abrirModalMateria, fecharModalMateria, salvarMateria, excluirMateria, abrirModalTopico, fecharModalTopico, salvarTopico, excluirTopico, abrirModalTipo, fecharModalTipo, salvarTipo, excluirTipo } from './modules/management.js';
+import { loadProfile, salvarPerfil, carregarConcursos, abrirModalNovoConcurso, fecharModalNovoConcurso, salvarNovoConcurso, ativarConcurso, excluirConcurso, mudarTabConfig } from './modules/profile.js';
 import { setupAutocomplete } from './modules/autocomplete.js';
 
 // --- EXPOSE TO WINDOW (for HTML onclick) ---
@@ -34,7 +35,15 @@ window.excluirTopico = excluirTopico;
 window.abrirModalTipo = abrirModalTipo;
 window.fecharModalTipo = fecharModalTipo;
 window.salvarTipo = salvarTipo;
-window.excluirTipo = excluirTipo;
+
+
+window.salvarPerfil = salvarPerfil;
+window.abrirModalNovoConcurso = abrirModalNovoConcurso;
+window.fecharModalNovoConcurso = fecharModalNovoConcurso;
+window.salvarNovoConcurso = salvarNovoConcurso;
+window.ativarConcurso = ativarConcurso;
+window.excluirConcurso = excluirConcurso;
+window.mudarTabConfig = mudarTabConfig;
 
 window.fecharModal = fecharModal;
 window.salvarConcursoInicial = salvarConcursoInicial;
@@ -85,7 +94,7 @@ function mudarAba(aba) {
 
     document.getElementById('sec-dashboard').style.display = 'none';
     document.getElementById('sec-historico').style.display = 'none';
-    document.getElementById('sec-gerenciar').style.display = 'none';
+    document.getElementById('sec-perfil').style.display = 'none';
 
     if (aba === 'dashboard') {
         document.getElementById('sec-dashboard').style.display = 'grid';
@@ -96,6 +105,12 @@ function mudarAba(aba) {
     } else if (aba === 'gerenciar') {
         document.getElementById('sec-gerenciar').style.display = 'block';
         carregarMaterias(); // Recarrega para garantir
+        carregarTiposEstudo();
+    } else if (aba === 'perfil') {
+        document.getElementById('sec-perfil').style.display = 'block';
+        loadProfile();
+        carregarConcursos();
+        carregarMaterias();
         carregarTiposEstudo();
     }
 }

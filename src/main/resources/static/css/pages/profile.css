@@ -1,0 +1,165 @@
+/* PROFILE LAYOUT */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 25px;
+    align-items: start;
+    padding-bottom: 50px;
+}
+
+@media (max-width: 900px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* CARDS */
+.profile-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 25px;
+}
+
+.card-header-gradient {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    padding: 20px;
+    color: white;
+    text-align: center;
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    backdrop-filter: blur(5px);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.profile-body {
+    padding: 20px;
+}
+
+.profile-info-row {
+    margin-bottom: 15px;
+}
+
+.profile-info-label {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 3px;
+    display: block;
+}
+
+.profile-info-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+/* TABS CONTAINER */
+.study-config-container {
+    background: white;
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    min-height: 500px;
+}
+
+.config-tabs {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+}
+
+.config-tab-btn {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #666;
+    transition: 0.3s;
+    border-bottom: 3px solid transparent;
+}
+
+.config-tab-btn:hover {
+    background: #f0f0f0;
+    color: var(--primary);
+}
+
+.config-tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    background: white;
+}
+
+.config-content {
+    padding: 25px;
+}
+
+.tab-pane {
+    display: none;
+    animation: fadeIn 0.3s;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* CONCURSOS SPECIFIC */
+.concurso-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.concurso-item:last-child {
+    border-bottom: none;
+}
+
+.concurso-item:hover {
+    background-color: #f9f9f9;
+}
+
+.concurso-item.ativo {
+    background-color: #f0f8ff;
+    border-left-color: var(--primary);
+}
+
+.concurso-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.concurso-badge {
+    font-size: 0.75rem;
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 5px;
+}

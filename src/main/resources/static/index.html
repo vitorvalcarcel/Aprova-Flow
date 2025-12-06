@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/pages/dashboard.css">
     <link rel="stylesheet" href="css/pages/history.css">
     <link rel="stylesheet" href="css/pages/management.css">
+    <link rel="stylesheet" href="css/pages/profile.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 
@@ -27,8 +28,8 @@
             <button class="nav-btn" id="nav-historico" onclick="mudarAba('historico')">
                 <span class="material-icons">history</span> Histórico
             </button>
-            <button class="nav-btn" id="nav-gerenciar" onclick="mudarAba('gerenciar')">
-                <span class="material-icons">settings</span> Gerenciar
+            <button class="nav-btn" id="nav-perfil" onclick="mudarAba('perfil')">
+                <span class="material-icons">person</span> Meu Perfil
             </button>
             <button class="nav-btn logout-btn" onclick="logout()"
                 style="margin-top: auto; background-color: #fee; color: #d32f2f;">
@@ -71,7 +72,7 @@
                 <div class="dash-right">
                     <div class="study-session compact">
                         <div class="session-header">
-                            <h3>⏱️ Registrar Estudo</h3>
+                            <h3>Registrar Estudo</h3>
 
                             <div class="toggle-mode">
                                 <button class="mode-btn active" onclick="mudarModo('timer')">Timer</button>
@@ -274,35 +275,100 @@
             </section>
 
             <!-- MANAGEMENT SECTION -->
-            <section id="sec-gerenciar" style="display: none;">
-                <div class="management-container">
+            <!-- MEU PERFIL SECTION -->
+            <section id="sec-perfil" style="display: none;">
+                <div class="profile-grid">
 
-                    <!-- Matérias (Accordion) -->
-                    <div class="manage-section">
-                        <div class="manage-header-row">
-                            <h3>📚 Matérias e Assuntos</h3>
-                            <button class="btn-add-new" onclick="abrirModalMateria()">
-                                <span class="material-icons">add</span> Nova Matéria
-                            </button>
+                    <!-- LEFT COLUMN -->
+                    <div class="left-col">
+                        <!-- PROFILE CARD -->
+                        <div class="profile-card">
+                            <div class="card-header-gradient">
+                                <div class="profile-avatar">
+                                    <span class="material-icons" style="font-size: 40px; color: white;">person</span>
+                                </div>
+                                <h3 style="margin:0; color: white; font-weight:500;">Meu Perfil</h3>
+                            </div>
+                            <div class="profile-body">
+                                <form id="form-perfil" onsubmit="salvarPerfil(event)">
+                                    <div class="profile-info-row">
+                                        <label class="profile-info-label">Nome de Exibição</label>
+                                        <input type="text" id="profile-name" placeholder="Seu nome"
+                                            style="padding: 8px;">
+                                    </div>
+                                    <div class="profile-info-row">
+                                        <label class="profile-info-label">Email (Login)</label>
+                                        <input type="email" id="profile-email" disabled
+                                            style="background-color: #f9f9f9; cursor: not-allowed; color:#888;">
+                                    </div>
+                                    <div class="profile-info-row">
+                                        <label class="profile-info-label">Alterar Senha</label>
+                                        <input type="password" id="profile-password"
+                                            placeholder="Nova senha (opcional)..." style="padding: 8px;">
+                                    </div>
+                                    <button type="submit" class="btn-save" style="margin-top: 10px;">
+                                        <span class="material-icons">save</span> Salvar Alterações
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                        <div id="lista-materias-gerenciar" class="accordion-list">
-                            <!-- Renderizado via JS -->
+
+                        <!-- CONCURSOS CARD -->
+                        <div class="profile-card">
+                            <div class="card-header-gradient"
+                                style="background: linear-gradient(135deg, #f57c00, #ff9800);">
+                                <h3 style="margin:0; color:white; font-weight:500;">Meus Concursos</h3>
+                            </div>
+                            <div class="profile-body" style="padding:0;">
+                                <div id="lista-concursos-perfil">
+                                    <!-- JS preenche -->
+                                </div>
+                                <button onclick="abrirModalNovoConcurso()"
+                                    style="width:100%; padding:15px; border:none; background:none; cursor:pointer; border-top:1px solid #eee; color: var(--primary); font-weight:bold; display:flex; align-items:center; justify-content:center; gap:5px; transition:0.2s;">
+                                    <span class="material-icons">add_circle</span> Novo Concurso
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Tipos de Estudo (Cards) -->
-                    <div class="manage-section">
-                        <div class="manage-header-row">
-                            <h3>🏷️ Tipos de Estudo</h3>
-                            <button class="btn-add-new" onclick="abrirModalTipo()">
-                                <span class="material-icons">add</span> Novo Tipo
+                    <!-- RIGHT COLUMN -->
+                    <div class="study-config-container">
+                        <div class="config-tabs">
+                            <button class="config-tab-btn active" onclick="mudarTabConfig('materias')">
+                                <span class="material-icons"
+                                    style="vertical-align:middle; font-size:18px; margin-right:5px;">menu_book</span>
+                                Matérias
+                            </button>
+                            <button class="config-tab-btn" onclick="mudarTabConfig('tipos')">
+                                <span class="material-icons"
+                                    style="vertical-align:middle; font-size:18px; margin-right:5px;">label</span> Tipos
+                                de Estudo
                             </button>
                         </div>
-                        <div id="lista-tipos-gerenciar" class="cards-grid">
-                            <!-- Renderizado via JS -->
+                        <div class="config-content">
+                            <!-- TAB MATERIAS -->
+                            <div id="tab-materias" class="tab-pane active">
+                                <div class="manage-header-row">
+                                    <h3>Gerenciar Matérias</h3>
+                                    <button class="btn-add-new" onclick="abrirModalMateria()">
+                                        <span class="material-icons">add</span> Nova Matéria
+                                    </button>
+                                </div>
+                                <div id="lista-materias-gerenciar" class="accordion-list"></div>
+                            </div>
+
+                            <!-- TAB TIPOS -->
+                            <div id="tab-tipos" class="tab-pane">
+                                <div class="manage-header-row">
+                                    <h3>Gerenciar Tipos de Estudo</h3>
+                                    <button class="btn-add-new" onclick="abrirModalTipo()">
+                                        <span class="material-icons">add</span> Novo Tipo
+                                    </button>
+                                </div>
+                                <div id="lista-tipos-gerenciar" class="cards-grid"></div>
+                            </div>
                         </div>
                     </div>
-
                 </div>
             </section>
 
@@ -456,6 +522,23 @@
                 </div>
                 <div class="modal-actions" style="justify-content: center;">
                     <button type="submit" class="btn-save" style="width: 100%;">Começar Jornada</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Novo Concurso (Gerenciamento) -->
+    <div id="modal-novo-concurso" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h3>Novo Concurso</h3>
+            <form onsubmit="salvarNovoConcurso(event)">
+                <div class="form-group">
+                    <label>Nome do Concurso</label>
+                    <input type="text" id="novo-concurso-nome" required placeholder="Ex: Receita Federal">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal-cancel" onclick="fecharModalNovoConcurso()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar</button>
                 </div>
             </form>
         </div>

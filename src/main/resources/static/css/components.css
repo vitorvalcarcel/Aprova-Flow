@@ -83,6 +83,35 @@ textarea:focus {
     color: #dc3545;
 }
 
+.btn-icon-action {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    background: #f0f0f0;
+    color: #555;
+    transition: 0.2s;
+    font-weight: 500;
+}
+
+.btn-icon-action:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.btn-icon-action.delete {
+    background: #fee;
+    color: #d32f2f;
+}
+
+.btn-icon-action.delete:hover {
+    background: #fcc;
+}
+
 /* AUTOCOMPLETE */
 .autocomplete-wrapper {
     position: relative;
