@@ -33,7 +33,7 @@ public class RegistroEstudoService {
     public RegistroEstudo registrar(RegistroEstudo novoRegistro) {
         Ciclo cicloAtual = cicloService.buscarCicloAtivo();
         novoRegistro.setCiclo(cicloAtual);
-        novoRegistro.setUser(getUsuarioLogado()); // VINCULA AO USUÁRIO
+        novoRegistro.setUser(getUsuarioLogado());
         
         if (novoRegistro.getQuestoesFeitas() != null && novoRegistro.getQuestoesFeitas() > 0) {
             int total = novoRegistro.getQuestoesCertas() + novoRegistro.getQuestoesErradas();
@@ -77,9 +77,13 @@ public class RegistroEstudoService {
         return String.format("%02d:%02d", horas, minutos);
     }
 
-    public List<RegistroEstudo> listarComFiltros(Long materiaId, Long topicoId, Long tipoEstudoId, java.time.LocalDate dataInicio, java.time.LocalDate dataFim) {
-        // Passamos o ID do usuário para o filtro
-        return repository.findWithFilters(getUsuarioLogado().getId(), materiaId, topicoId, tipoEstudoId, dataInicio, dataFim);
+    // --- CORREÇÃO AQUI: Mudamos para receber List<Long> ---
+    public List<RegistroEstudo> listarComFiltros(List<Long> materiaIds, List<Long> topicoIds, Long tipoEstudoId, java.time.LocalDate dataInicio, java.time.LocalDate dataFim) {
+        // Verifica se as listas estão vazias e passa null para o repositório ignorar o filtro se necessário
+        List<Long> mIds = (materiaIds != null && !materiaIds.isEmpty()) ? materiaIds : null;
+        List<Long> tIds = (topicoIds != null && !topicoIds.isEmpty()) ? topicoIds : null;
+
+        return repository.findWithFilters(getUsuarioLogado().getId(), mIds, tIds, tipoEstudoId, dataInicio, dataFim);
     }
 
     public RegistroEstudo buscarPorId(Long id) {
@@ -87,7 +91,6 @@ public class RegistroEstudoService {
     }
 
     public RegistroEstudo atualizar(RegistroEstudo registro) {
-        // Garante que não perde o usuário na atualização
         if(registro.getUser() == null) {
             registro.setUser(getUsuarioLogado());
         }

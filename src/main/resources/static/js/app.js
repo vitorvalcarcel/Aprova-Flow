@@ -1,7 +1,8 @@
 import { API_URL } from './modules/config.js';
 import { mostrarModal, confirmarAcao, fecharModal } from './modules/utils.js';
+import { state } from './modules/state.js'; // Adicionado para acessar o cache de matérias
 import { carregarDashboard, mudarModo, iniciarCronometro, pausarCronometro, continuarCronometro, cancelarCronometro, salvarTimer, salvarManual } from './modules/dashboard.js';
-import { carregarHistorico, atualizarFiltroData, toggleDetalhes, abrirModalEdicao, fecharModalEdit, salvarEdicao, excluirRegistro } from './modules/history.js';
+import { carregarHistorico, atualizarFiltroData, toggleDetalhes, abrirModalEdicao, fecharModalEdit, salvarEdicao, excluirRegistro, renderizarFiltroCombinado } from './modules/history.js'; // Adicionado renderizarFiltroCombinado
 import { carregarMaterias, carregarTiposEstudo, toggleAccordion, abrirModalMateria, fecharModalMateria, salvarMateria, excluirMateria, abrirModalTopico, fecharModalTopico, salvarTopico, excluirTopico, abrirModalTipo, fecharModalTipo, salvarTipo, excluirTipo } from './modules/management.js';
 import { loadProfile, salvarPerfil, carregarConcursos, abrirModalNovoConcurso, fecharModalNovoConcurso, salvarNovoConcurso, ativarConcurso, excluirConcurso, mudarTabConfig } from './modules/profile.js';
 import { setupAutocomplete } from './modules/autocomplete.js';
@@ -52,7 +53,6 @@ window.salvarConcursoInicial = salvarConcursoInicial;
 
 document.addEventListener("DOMContentLoaded", () => {
     verificarConcursoAtivo();
-    verificarConcursoAtivo();
     // Heartbeat movido para script separado
     carregarDashboard();
     carregarMaterias();
@@ -63,7 +63,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (manualData) manualData.valueAsDate = new Date();
 
     // Auto-filter listeners
-    ['filtro-materia', 'filtro-topico', 'filtro-tipo', 'filtro-periodo', 'filtro-data-inicio', 'filtro-data-fim'].forEach(id => {
+    // Nota: 'filtro-materia' e 'filtro-topico' foram removidos do HTML na nova versão
+    // mas mantemos aqui caso o elemento exista para evitar erros, ou limpamos a lista
+    ['filtro-tipo', 'filtro-periodo', 'filtro-data-inicio', 'filtro-data-fim'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('change', carregarHistorico);
     });
@@ -92,20 +94,36 @@ function mudarAba(aba) {
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`nav-${aba}`).classList.add('active');
 
-    document.getElementById('sec-dashboard').style.display = 'none';
-    document.getElementById('sec-historico').style.display = 'none';
-    document.getElementById('sec-perfil').style.display = 'none';
+    // Oculta todas as seções
+    const secoes = ['sec-dashboard', 'sec-historico', 'sec-perfil', 'sec-gerenciar'];
+    secoes.forEach(secId => {
+        const el = document.getElementById(secId);
+        if (el) el.style.display = 'none';
+    });
 
     if (aba === 'dashboard') {
         document.getElementById('sec-dashboard').style.display = 'grid';
         carregarDashboard();
     } else if (aba === 'historico') {
         document.getElementById('sec-historico').style.display = 'block';
+
+        // LÓGICA NOVA: Renderiza o filtro de árvore
+        if (state.materiasCache.length > 0) {
+            renderizarFiltroCombinado();
+        } else {
+            // Se não tiver cache, carrega matérias e depois renderiza
+            carregarMaterias().then(() => renderizarFiltroCombinado());
+        }
         carregarHistorico();
+
     } else if (aba === 'gerenciar') {
-        document.getElementById('sec-gerenciar').style.display = 'block';
-        carregarMaterias(); // Recarrega para garantir
-        carregarTiposEstudo();
+        // Caso ainda exista a aba gerenciar separada no seu HTML
+        const secGerenciar = document.getElementById('sec-gerenciar');
+        if (secGerenciar) {
+            secGerenciar.style.display = 'block';
+            carregarMaterias(); 
+            carregarTiposEstudo();
+        }
     } else if (aba === 'perfil') {
         document.getElementById('sec-perfil').style.display = 'block';
         loadProfile();
@@ -155,5 +173,3 @@ async function salvarConcursoInicial(e) {
         alert("Erro de conexão.");
     }
 }
-
-

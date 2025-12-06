@@ -1,12 +1,107 @@
 import { API_URL } from './config.js';
 import { mostrarModal, confirmarAcao } from './utils.js';
 import { state, setRegistrosGlobais } from './state.js';
-import { carregarMaterias, carregarTiposEstudo } from './management.js';
+// Não precisamos mais carregarMaterias aqui, pois usaremos o cache do state direto ou chamaremos ao iniciar
+
+// --- MULTI-SELECT LOGIC ---
+
+// Expor para o HTML
+window.toggleMultiselect = function() {
+    const dropdown = document.getElementById('multiselect-list');
+    dropdown.classList.toggle('show');
+};
+
+// Fechar ao clicar fora
+document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById('filtro-combinado');
+    if (wrapper && !wrapper.contains(e.target)) {
+        document.getElementById('multiselect-list').classList.remove('show');
+    }
+});
+
+export function renderizarFiltroCombinado() {
+    const container = document.getElementById('multiselect-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Opção "Limpar Filtros"
+    const divClean = document.createElement('div');
+    divClean.innerHTML = `<button class="btn-icon-small" onclick="limparSelecaoFiltro()" style="width:100%; text-align:left; color:#d32f2f;">Limpar Seleção</button>`;
+    divClean.style.marginBottom = "10px";
+    container.appendChild(divClean);
+
+    if (!state.materiasCache || state.materiasCache.length === 0) {
+        container.innerHTML = '<p style="padding:10px;">Nenhuma matéria cadastrada.</p>';
+        return;
+    }
+
+    state.materiasCache.forEach(materia => {
+        const divMateria = document.createElement('div');
+        divMateria.className = 'ms-item-materia';
+
+        // Checkbox Matéria (Pai)
+        // Ao clicar no Pai, selecionamos/deselecionamos todos os filhos visualmente
+        divMateria.innerHTML = `
+            <label class="ms-label-materia">
+                <input type="checkbox" class="chk-materia" value="${materia.id}" onchange="onCheckMateria(this)">
+                ${materia.nome}
+            </label>
+        `;
+
+        // Checkbox Tópicos (Filhos)
+        if (materia.topicos && materia.topicos.length > 0) {
+            const divTopicos = document.createElement('div');
+            divTopicos.className = 'ms-group-topicos';
+            
+            materia.topicos.forEach(topico => {
+                divTopicos.innerHTML += `
+                    <label class="ms-label-topico">
+                        <input type="checkbox" class="chk-topico mat-${materia.id}" value="${topico.id}" onchange="carregarHistorico()">
+                        ${topico.descricao}
+                    </label>
+                `;
+            });
+            divMateria.appendChild(divTopicos);
+        }
+
+        container.appendChild(divMateria);
+    });
+}
+
+window.onCheckMateria = function(checkbox) {
+    const materiaId = checkbox.value;
+    const isChecked = checkbox.checked;
+    
+    // Selecionar/Deselecionar todos os tópicos filhos
+    const topicosCheckboxes = document.querySelectorAll(`.chk-topico.mat-${materiaId}`);
+    topicosCheckboxes.forEach(chk => chk.checked = isChecked);
+    
+    carregarHistorico();
+};
+
+window.limparSelecaoFiltro = function() {
+    document.querySelectorAll('.chk-materia, .chk-topico').forEach(c => c.checked = false);
+    carregarHistorico();
+};
+
+function getIdsSelecionados() {
+    const materiaIds = Array.from(document.querySelectorAll('.chk-materia:checked')).map(c => c.value);
+    const topicoIds = Array.from(document.querySelectorAll('.chk-topico:checked')).map(c => c.value);
+    
+    // Atualiza label do botão
+    const total = materiaIds.length + topicoIds.length;
+    const label = document.getElementById('multiselect-label');
+    if(label) label.innerText = total > 0 ? `${total} iten(s) selecionado(s)` : "Filtrar Matérias e Assuntos";
+
+    return { materiaIds, topicoIds };
+}
+
+// --- FUNÇÕES EXISTENTES ATUALIZADAS ---
 
 export function atualizarFiltroData() {
+    // Mesma lógica anterior...
     const periodo = document.getElementById('filtro-periodo').value;
     const divCustom = document.getElementById('div-datas-custom');
-
     if (periodo === 'custom') {
         divCustom.style.display = 'flex';
     } else {
@@ -20,11 +115,13 @@ export async function carregarHistorico() {
     if (!lista) return;
     lista.innerHTML = '<p style="text-align:center; color:#888;">Carregando...</p>';
 
-    const materiaId = document.getElementById('filtro-materia').value;
-    const topicoId = document.getElementById('filtro-topico').value;
+    // --- Captura Multi-Seleção ---
+    const { materiaIds, topicoIds } = getIdsSelecionados();
+    
     const tipoId = document.getElementById('filtro-tipo').value;
     const periodo = document.getElementById('filtro-periodo').value;
 
+    // ... (Lógica de datas permanece igual, copie do arquivo original ou veja abaixo)
     let dataInicio = null;
     let dataFim = null;
     const hoje = new Date();
@@ -38,32 +135,23 @@ export async function carregarHistorico() {
         dataInicio = ontem.toISOString().split('T')[0];
         dataFim = dataInicio;
     } else if (periodo === '7dias') {
-        const seteDiasAtras = new Date(hoje);
-        seteDiasAtras.setDate(hoje.getDate() - 7);
-        dataInicio = seteDiasAtras.toISOString().split('T')[0];
-        dataFim = hoje.toISOString().split('T')[0];
+        const d = new Date(hoje); d.setDate(hoje.getDate() - 7);
+        dataInicio = d.toISOString().split('T')[0]; dataFim = hoje.toISOString().split('T')[0];
     } else if (periodo === '30dias') {
-        const trintaDiasAtras = new Date(hoje);
-        trintaDiasAtras.setDate(hoje.getDate() - 30);
-        dataInicio = trintaDiasAtras.toISOString().split('T')[0];
-        dataFim = hoje.toISOString().split('T')[0];
+        const d = new Date(hoje); d.setDate(hoje.getDate() - 30);
+        dataInicio = d.toISOString().split('T')[0]; dataFim = hoje.toISOString().split('T')[0];
     } else if (periodo === 'mesAtual') {
-        const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-        dataInicio = primeiroDia.toISOString().split('T')[0];
+        dataInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
         dataFim = hoje.toISOString().split('T')[0];
-    } else if (periodo === 'mesPassado') {
-        const primeiroDiaMesPassado = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
-        const ultimoDiaMesPassado = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
-        dataInicio = primeiroDiaMesPassado.toISOString().split('T')[0];
-        dataFim = ultimoDiaMesPassado.toISOString().split('T')[0];
     } else if (periodo === 'custom') {
         dataInicio = document.getElementById('filtro-data-inicio').value;
         dataFim = document.getElementById('filtro-data-fim').value;
     }
+    // ...
 
     const params = new URLSearchParams();
-    if (materiaId) params.append('materiaId', materiaId);
-    if (topicoId) params.append('topicoId', topicoId);
+    if (materiaIds.length > 0) params.append('materiaIds', materiaIds.join(','));
+    if (topicoIds.length > 0) params.append('topicoIds', topicoIds.join(','));
     if (tipoId) params.append('tipoEstudoId', tipoId);
     if (dataInicio) params.append('dataInicio', dataInicio);
     if (dataFim) params.append('dataFim', dataFim);

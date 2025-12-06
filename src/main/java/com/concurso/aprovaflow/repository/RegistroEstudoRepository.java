@@ -16,10 +16,9 @@ public interface RegistroEstudoRepository extends JpaRepository<RegistroEstudo, 
 
     @Query("SELECT r FROM RegistroEstudo r WHERE " +
             "r.user.id = :userId AND " +
-            "(:materiaId IS NULL OR r.materia.id = :materiaId) AND " +
-            "(:topicoId IS NULL OR r.topico.id = :topicoId) AND " +
+            "((:materiaIds) IS NULL OR (:topicoIds) IS NULL OR (r.materia.id IN :materiaIds OR r.topico.id IN :topicoIds)) AND " +
             "(:tipoEstudoId IS NULL OR r.tipoEstudo.id = :tipoEstudoId) AND " +
             "((:dataInicio IS NULL OR r.data >= :dataInicio) AND (:dataFim IS NULL OR r.data <= :dataFim)) " +
             "ORDER BY r.data DESC, r.horaInicio DESC")
-    List<RegistroEstudo> findWithFilters(Long userId, Long materiaId, Long topicoId, Long tipoEstudoId, java.time.LocalDate dataInicio, java.time.LocalDate dataFim);
+    List<RegistroEstudo> findWithFilters(Long userId, List<Long> materiaIds, List<Long> topicoIds, Long tipoEstudoId, java.time.LocalDate dataInicio, java.time.LocalDate dataFim);
 }

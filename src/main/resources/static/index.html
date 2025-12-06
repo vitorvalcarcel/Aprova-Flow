@@ -234,17 +234,21 @@
                     <div class="history-header-box">
                         <h3>📜 Histórico de Estudos</h3>
                         <div class="filter-bar">
-                            <select id="filtro-materia" onchange="carregarTopicos('filtro')">
-                                <option value="">Todas Matérias</option>
-                            </select>
-                            <select id="filtro-topico">
-                                <option value="">Todos Tópicos</option>
-                            </select>
-                            <select id="filtro-tipo">
+                            
+                            <div class="multiselect-wrapper" id="filtro-combinado">
+                                <div class="multiselect-header" onclick="toggleMultiselect()">
+                                    <span id="multiselect-label">Filtrar Matérias e Assuntos</span>
+                                    <span class="material-icons">arrow_drop_down</span>
+                                </div>
+                                <div class="multiselect-dropdown" id="multiselect-list">
+                                    </div>
+                            </div>
+
+                            <select id="filtro-tipo" style="flex:1;">
                                 <option value="">Todos Tipos</option>
                             </select>
 
-                            <select id="filtro-periodo" onchange="atualizarFiltroData()">
+                            <select id="filtro-periodo" onchange="atualizarFiltroData()" style="flex:1;">
                                 <option value="max">Máximo (Tudo)</option>
                                 <option value="hoje">Hoje</option>
                                 <option value="ontem">Ontem</option>
@@ -254,18 +258,8 @@
                                 <option value="mesPassado">Mês Passado</option>
                                 <option value="custom">Personalizado...</option>
                             </select>
-
-                            <!-- Campos ocultos para data personalizada -->
-                            <div id="div-datas-custom" style="display:none; gap:5px; align-items:center;">
-                                <input type="date" id="filtro-data-inicio" onchange="carregarHistorico()">
-                                <span>até</span>
-                                <input type="date" id="filtro-data-fim" onchange="carregarHistorico()">
+                            
                             </div>
-
-                            <button class="btn-filter" onclick="carregarHistorico()" style="display:none;">
-                                <span class="material-icons">filter_list</span>
-                            </button>
-                        </div>
                     </div>
 
                     <div id="lista-historico" class="history-list">

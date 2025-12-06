@@ -50,20 +50,17 @@ public class RegistroEstudoController {
         String horaFormatada = dto.getCargaHoraria().length() == 5 ? dto.getCargaHoraria() + ":00" : dto.getCargaHoraria();
         novo.setCargaHoraria(LocalTime.parse(horaFormatada)); 
 
-        // 1. Busca Matéria
         var materia = materiaService.listarTodas().stream()
                 .filter(m -> m.getId().equals(dto.getMateriaId()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Matéria não encontrada"));
         novo.setMateria(materia);
 
-        // 2. Busca Tópico
         if (dto.getTopicoId() != null) {
             var topico = topicoRepository.findById(dto.getTopicoId()).orElse(null); 
             novo.setTopico(topico);
         }
 
-        // 3. Busca Tipo de Estudo
         if (dto.getTipoEstudoId() != null) {
             var tipo = tipoEstudoRepository.findById(dto.getTipoEstudoId())
                     .orElseThrow(() -> new RuntimeException("Tipo de Estudo não encontrado"));
@@ -87,15 +84,16 @@ public class RegistroEstudoController {
         return ResponseEntity.ok(dash);
     }
 
+    // --- CORREÇÃO AQUI: Parâmetros alterados para List<Long> ---
     @GetMapping
     public List<RegistroEstudo> listar(
-            @RequestParam(required = false) Long materiaId,
-            @RequestParam(required = false) Long topicoId,
+            @RequestParam(required = false) List<Long> materiaIds,
+            @RequestParam(required = false) List<Long> topicoIds,
             @RequestParam(required = false) Long tipoEstudoId,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dataInicio,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dataFim
     ) {
-        return registroService.listarComFiltros(materiaId, topicoId, tipoEstudoId, dataInicio, dataFim);
+        return registroService.listarComFiltros(materiaIds, topicoIds, tipoEstudoId, dataInicio, dataFim);
     }
 
     @PutMapping("/{id}")
