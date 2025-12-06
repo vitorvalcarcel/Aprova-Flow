@@ -1,6 +1,6 @@
 package com.concurso.aprovaflow.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -12,13 +12,13 @@ public class Topico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Integer numeroEdital; // Ex: 1, 2, 3...
+    private Integer numeroEdital;
 
-    @Column(length = 1000) // Aumenta o tamanho para caber descrições grandes do edital
+    @Column(length = 1000)
     private String descricao;
 
     @ManyToOne
     @JoinColumn(name = "materia_id")
-    @JsonIgnore
+    @JsonIgnoreProperties("topicos")
     private Materia materia;
 }
