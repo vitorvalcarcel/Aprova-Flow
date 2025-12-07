@@ -19,8 +19,10 @@ public class Concurso {
 
     private LocalDate dataProva;
 
-    @OneToMany(mappedBy = "concurso", cascade = CascadeType.ALL)
-    private List<Materia> materias = new ArrayList<>();
+    // Configurações do Ciclo
+    private Double cargaHorariaCiclo;
+    private Integer questoesIncremento;
+    private Integer questoesMetaInicial;
 
     private boolean ativo;
 

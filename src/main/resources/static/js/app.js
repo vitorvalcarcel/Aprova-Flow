@@ -1,10 +1,10 @@
 import { API_URL } from './modules/config.js';
 import { mostrarModal, confirmarAcao, fecharModal } from './modules/utils.js';
 import { state } from './modules/state.js'; // Adicionado para acessar o cache de matérias
-import { carregarDashboard, mudarModo, iniciarCronometro, pausarCronometro, continuarCronometro, cancelarCronometro, salvarTimer, salvarManual } from './modules/dashboard.js';
+import { carregarDashboard, mudarModo, iniciarCronometro, pausarCronometro, continuarCronometro, cancelarCronometro, salvarTimer, salvarManual, fecharCicloConfirmacao } from './modules/dashboard.js';
 import { carregarHistorico, atualizarFiltroData, toggleDetalhes, abrirModalEdicao, fecharModalEdit, salvarEdicao, excluirRegistro, renderizarFiltroCombinado } from './modules/history.js'; // Adicionado renderizarFiltroCombinado
 import { carregarMaterias, carregarTiposEstudo, toggleAccordion, abrirModalMateria, fecharModalMateria, salvarMateria, excluirMateria, abrirModalTopico, fecharModalTopico, salvarTopico, excluirTopico, abrirModalTipo, fecharModalTipo, salvarTipo, excluirTipo } from './modules/management.js';
-import { loadProfile, salvarPerfil, carregarConcursos, abrirModalNovoConcurso, fecharModalNovoConcurso, salvarNovoConcurso, ativarConcurso, excluirConcurso, mudarTabConfig } from './modules/profile.js';
+import { loadProfile, salvarPerfil, carregarConcursos, abrirModalNovoConcurso, fecharModalNovoConcurso, salvarNovoConcurso, ativarConcurso, excluirConcurso, mudarTabConfig, abrirConfigConcurso, fecharModalConfigConcurso, vincularMateriaAoConcurso } from './modules/profile.js';
 import { setupAutocomplete } from './modules/autocomplete.js';
 
 // --- EXPOSE TO WINDOW (for HTML onclick) ---
@@ -16,6 +16,7 @@ window.continuarCronometro = continuarCronometro;
 window.cancelarCronometro = cancelarCronometro;
 window.salvarTimer = salvarTimer;
 window.salvarManual = salvarManual;
+window.fecharCicloConfirmacao = fecharCicloConfirmacao;
 
 window.atualizarFiltroData = atualizarFiltroData;
 window.toggleDetalhes = toggleDetalhes;
@@ -45,6 +46,10 @@ window.salvarNovoConcurso = salvarNovoConcurso;
 window.ativarConcurso = ativarConcurso;
 window.excluirConcurso = excluirConcurso;
 window.mudarTabConfig = mudarTabConfig;
+
+window.abrirConfigConcurso = abrirConfigConcurso;
+window.fecharModalConfigConcurso = fecharModalConfigConcurso;
+window.vincularMateriaAoConcurso = vincularMateriaAoConcurso;
 
 window.fecharModal = fecharModal;
 window.salvarConcursoInicial = salvarConcursoInicial;
@@ -121,7 +126,7 @@ function mudarAba(aba) {
         const secGerenciar = document.getElementById('sec-gerenciar');
         if (secGerenciar) {
             secGerenciar.style.display = 'block';
-            carregarMaterias(); 
+            carregarMaterias();
             carregarTiposEstudo();
         }
     } else if (aba === 'perfil') {

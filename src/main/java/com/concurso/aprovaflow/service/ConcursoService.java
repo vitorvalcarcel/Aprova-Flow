@@ -35,9 +35,13 @@ public class ConcursoService {
     public Optional<Concurso> buscarConcursoAtivo() {
         return concursoRepository.findByAtivoTrueAndUser(getUsuarioLogado());
     }
+    
+    public Optional<Concurso> buscarPorId(Long id) {
+        return concursoRepository.findById(id);
+    }
 
     @Transactional
-    public Concurso criarConcurso(String nome) {
+    public Concurso criarConcurso(com.concurso.aprovaflow.dto.ConcursoDTO dto) {
         User user = getUsuarioLogado();
 
         // Desativar concursos anteriores DESTE usuário
@@ -49,18 +53,18 @@ public class ConcursoService {
 
         // Criar novo concurso vinculado ao usuário
         Concurso novo = new Concurso();
-        novo.setNome(nome);
+        novo.setNome(dto.getNome());
+        novo.setDataProva(dto.getDataProva());
+        novo.setCargaHorariaCiclo(dto.getCargaHorariaCiclo());
+        novo.setQuestoesIncremento(dto.getQuestoesIncremento());
+        novo.setQuestoesMetaInicial(dto.getQuestoesMetaInicial());
         novo.setAtivo(true);
-        novo.setUser(user); // Vincula ao usuário
+        novo.setUser(user); 
         novo = concursoRepository.save(novo);
 
-        // Criar Ciclo 1 automaticamente
-        Ciclo ciclo1 = new Ciclo();
-        ciclo1.setNumero(1);
-        ciclo1.setHorasTotais(0.0);
-        ciclo1.setAtivo(true);
-        ciclo1.setConcurso(novo);
-        cicloRepository.save(ciclo1);
+        // Não cria Ciclo aqui mais, pois ciclo é calculado dinamicamente ou logado ao fechar.
+        // A lógica de Ciclo Calculado NÃO depende de ter um objeto Ciclo aberto no banco.
+        // O "Ciclo Atual" é virtual.
 
         return novo;
     }
@@ -90,11 +94,6 @@ public class ConcursoService {
                 .filter(c -> c.getUser().getId().equals(user.getId()))
                 .orElseThrow(() -> new RuntimeException("Concurso não encontrado ou não pertence ao usuário"));
         
-        // Ciclos and Registros should be cascaded or handled. 
-        // Assuming simple delete is enough if JPA cascade is set, or we might need to delete manually.
-        // Given earlier conversations about manually handling cascade or errors, I should check entities but 
-        // for now standard delete. User requirement said "deletes all associated study records".
-        // If JPA cascade is not set, this might error. But let's assume valid JPA setup or add cascade later.
         concursoRepository.delete(target);
     }
 }

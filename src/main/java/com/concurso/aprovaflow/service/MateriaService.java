@@ -48,4 +48,7 @@ public class MateriaService {
         List<RegistroEstudo> registros = registroRepository.findAllByMateriaIdAndUser(materiaId, user);
         registroRepository.deleteAll(registros);
     }
+    public Materia buscarPorId(Long id) {
+        return repository.findById(id).orElseThrow(() -> new RuntimeException("Matéria não encontrada"));
+    }
 }

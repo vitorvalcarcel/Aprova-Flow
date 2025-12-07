@@ -42,8 +42,8 @@ public class RegistroEstudo {
     private Topico topico;
 
     @ManyToOne
-    @JoinColumn(name = "ciclo_id")
-    private Ciclo ciclo;
+    @JoinColumn(name = "concurso_id")
+    private Concurso concurso;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

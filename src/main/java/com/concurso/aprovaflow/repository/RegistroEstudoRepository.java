@@ -10,7 +10,9 @@ import java.util.List;
 @Repository
 public interface RegistroEstudoRepository extends JpaRepository<RegistroEstudo, Long> {
     
-    List<RegistroEstudo> findByCicloIdAndUser(Long cicloId, User user);
+    List<RegistroEstudo> findByConcursoId(Long concursoId);
+    
+    List<RegistroEstudo> findByConcursoIdAndUser(Long concursoId, User user);
 
     List<RegistroEstudo> findAllByMateriaIdAndUser(Long materiaId, User user);
 

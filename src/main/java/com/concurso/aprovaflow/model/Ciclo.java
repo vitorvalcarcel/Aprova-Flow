@@ -2,6 +2,7 @@ package com.concurso.aprovaflow.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.time.LocalDate;
 
 @Data
 @Entity
@@ -15,7 +16,11 @@ public class Ciclo {
 
     private Double horasTotais; // Ex: 12.0
     
-    private boolean ativo; // Para saber qual é o ciclo atual
+    private LocalDate dataInicio;
+    
+    private LocalDate dataFechamento;
+    
+    private boolean ativo; // Indica se este é o ciclo ATUALMENTE em aberto (logicamente apenas um deve estar ativo por concurso, ou nenhum se todos fechados)
 
     @ManyToOne
     @JoinColumn(name = "concurso_id")

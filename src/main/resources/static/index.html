@@ -40,35 +40,48 @@
         <!-- Main Content Area -->
         <main class="main-content">
 
-            <!-- DASHBOARD SECTION -->
+            <!-- DASHBOARD SECTION (Renomeado para MEU CICLO) -->
             <section id="sec-dashboard" class="dashboard-grid">
 
-                <!-- Left Column: Metrics & Charts (Future) -->
+                <!-- Left Column: Ciclo Status & Cards -->
                 <div class="dash-left">
                     <header class="dash-header">
                         <div class="dash-info">
-                            <h2>📊 Status do Ciclo</h2>
+                            <h2>🎯 Meu Ciclo Atual</h2>
                             <div class="dash-metrics">
                                 <div class="metric-card">
-                                    <span class="label">Horas Totais</span>
-                                    <strong id="lblHoras">--:--</strong>
+                                    <span class="label">Ciclo Atual</span>
+                                    <strong id="lblCicloNome">--</strong>
                                 </div>
-                                <div class="metric-card highlight">
-                                    <span class="label">Mensagem</span>
-                                    <strong id="lblMensagem" style="font-size: 0.9em;">Carregando...</strong>
+                                <div class="metric-card">
+                                    <span class="label">Progresso Geral</span>
+                                    <strong id="lblCicloProgresso">0%</strong>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="label">Horas Totais</span>
+                                    <strong id="lblCicloHoras">0h</strong>
                                 </div>
                             </div>
                         </div>
+                        <div class="dash-actions">
+                            <button id="btnFecharCiclo" class="btn-action" onclick="fecharCicloConfirmacao()" disabled>
+                                <span class="material-icons">check_circle</span> Fechar Ciclo
+                            </button>
+                        </div>
                     </header>
 
-                    <div class="placeholder-chart"
-                        style="background: white; padding: 20px; border-radius: 15px; text-align: center; color: #888; margin-top: 20px;">
-                        <span class="material-icons" style="font-size: 4rem; opacity: 0.2;">bar_chart</span>
-                        <p>Gráficos e Estatísticas virão aqui...</p>
+                    <!-- Barra de Progresso Linear Geral -->
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="ciclo-progress-fill" style="width: 0%;"></div>
+                    </div>
+
+                    <!-- Grid de Cards das Matérias -->
+                    <div id="ciclo-materias-grid" class="cards-grid-ciclo" style="margin-top: 20px;">
+                        <p style="text-align: center; color: #888;">Carregando dados do ciclo...</p>
                     </div>
                 </div>
 
-                <!-- Right Column: Study Registration -->
+                <!-- Right Column: Study Registration (Mantido igual) -->
                 <div class="dash-right">
                     <div class="study-session compact">
                         <div class="session-header">
@@ -234,14 +247,14 @@
                     <div class="history-header-box">
                         <h3>📜 Histórico de Estudos</h3>
                         <div class="filter-bar">
-                            
+
                             <div class="multiselect-wrapper" id="filtro-combinado">
                                 <div class="multiselect-header" onclick="toggleMultiselect()">
                                     <span id="multiselect-label">Filtrar Matérias e Assuntos</span>
                                     <span class="material-icons">arrow_drop_down</span>
                                 </div>
                                 <div class="multiselect-dropdown" id="multiselect-list">
-                                    </div>
+                                </div>
                             </div>
 
                             <select id="filtro-tipo" style="flex:1;">
@@ -258,8 +271,8 @@
                                 <option value="mesPassado">Mês Passado</option>
                                 <option value="custom">Personalizado...</option>
                             </select>
-                            
-                            </div>
+
+                        </div>
                     </div>
 
                     <div id="lista-historico" class="history-list">
@@ -268,7 +281,6 @@
                 </div>
             </section>
 
-            <!-- MANAGEMENT SECTION -->
             <!-- MEU PERFIL SECTION -->
             <section id="sec-perfil" style="display: none;">
                 <div class="profile-grid">
@@ -508,11 +520,17 @@
     <div id="modal-concurso" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.9);">
         <div class="modal-box">
             <h3>🚀 Bem-vindo ao AprovaFlow!</h3>
-            <p>Para começar, precisamos saber para qual concurso você está estudando.</p>
+            <p>Configure seu primeiro ciclo de estudos.</p>
             <form onsubmit="salvarConcursoInicial(event)">
                 <div class="form-group">
                     <label>Nome do Concurso</label>
                     <input type="text" id="concurso-nome-inicial" required placeholder="Ex: Banco do Brasil 2026">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Carga Horária (Ciclo)</label>
+                        <input type="number" id="concurso-carga-inicial" required placeholder="Ex: 24 (horas)" min="1">
+                    </div>
                 </div>
                 <div class="modal-actions" style="justify-content: center;">
                     <button type="submit" class="btn-save" style="width: 100%;">Começar Jornada</button>
@@ -530,11 +548,54 @@
                     <label>Nome do Concurso</label>
                     <input type="text" id="novo-concurso-nome" required placeholder="Ex: Receita Federal">
                 </div>
+                <div class="form-group">
+                    <label>Carga Horária do Ciclo (Horas)</label>
+                    <input type="number" id="novo-concurso-carga" required placeholder="Ex: 24" min="1">
+                </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-modal-cancel" onclick="fecharModalNovoConcurso()">Cancelar</button>
                     <button type="submit" class="btn-save">Salvar</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Configuração de Matérias do Concurso -->
+    <div id="modal-config-concurso" class="modal-overlay" style="display: none;">
+        <div class="modal-box large">
+            <h3>⚙️ Configurar Ciclo e Matérias</h3>
+            <input type="hidden" id="config-concurso-id">
+
+            <div class="config-section">
+                <h4>Vincular Matéria</h4>
+                <div class="form-row" style="align-items: flex-end;">
+                    <div class="form-group" style="flex:2;">
+                        <label>Matéria</label>
+                        <!-- Usaremos o select simples ou autocomplete? Autocomplete é melhor mas requer JS, vamos de select simples por enquanto -->
+                        <select id="config-select-materia" style="width:100%"></select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Peso</label>
+                        <input type="number" id="config-peso" value="1.0" step="0.1" min="0.1">
+                    </div>
+                    <button type="button" class="btn-save" onclick="vincularMateriaAoConcurso()"
+                        style="margin-bottom:0;">
+                        <span class="material-icons">add</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="config-section" style="margin-top:20px;">
+                <h4>Matérias do Ciclo</h4>
+                <ul id="lista-materias-config"
+                    style="list-style:none; padding:0; max-height:200px; overflow-y:auto; border:1px solid #eee; border-radius:5px;">
+                    <!-- Lista preenchida via JS -->
+                </ul>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="fecharModalConfigConcurso()">Fechar</button>
+            </div>
         </div>
     </div>
 

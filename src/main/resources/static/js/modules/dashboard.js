@@ -1,383 +1,358 @@
 import { API_URL } from './config.js';
-import { mostrarModal, confirmarAcao, getTempoFormatado } from './utils.js';
-import { state } from './state.js';
-import { carregarMaterias, carregarTiposEstudo } from './management.js';
+import { mostrarModal, confirmarAcao } from './utils.js';
 
-// Variáveis do Cronômetro
-let timerInterval;
-let segundosTotais = 0;
-let isRodando = false;
-let horaInicioTimer = null;
+let cronometroInterval;
+let segundos = 0;
+let isPausado = false;
+let concursoAtivoId = null;
+
+// --- CICLO & DASHBOARD ---
 
 export async function carregarDashboard() {
     try {
-        const response = await fetch(`${API_URL}/estudos/dashboard`);
-        const data = await response.json();
-        document.getElementById("lblHoras").innerText = data.totalHorasCiclo || "00:00";
-        document.getElementById("lblMensagem").innerText = data.mensagemMotivacional;
-    } catch (e) { console.error(e); }
+        // 1. Buscar Concurso Ativo
+        const resConcurso = await fetch(`${API_URL}/concursos/ativo`);
+        if (resConcurso.status === 204) {
+            document.getElementById('ciclo-materias-grid').innerHTML = '<p class="text-center">Nenhum concurso ativo.</p>';
+            return;
+        }
+        const concurso = await resConcurso.json();
+        concursoAtivoId = concurso.id;
+
+        // 2. Buscar Dados do Ciclo Atual
+        const resCiclo = await fetch(`${API_URL}/concursos/${concurso.id}/ciclo-atual`);
+        if (!resCiclo.ok) throw new Error("Erro ao carregar ciclo");
+
+        const dados = await resCiclo.json(); // CicloAtualDTO
+
+        renderizarCiclo(dados);
+
+    } catch (error) {
+        console.error(error);
+        document.getElementById('ciclo-materias-grid').innerHTML = '<p class="text-center text-red">Erro ao carregar ciclo.</p>';
+    }
 }
 
-// --- LÓGICA DE ABAS ---
-export function mudarModo(modo) {
-    if (isRodando && modo === 'manual') {
-        mostrarModal("Atenção", "Pause ou pare o cronômetro antes de trocar de modo!");
+function renderizarCiclo(dados) {
+    // Header Metrics
+    document.getElementById('lblCicloNome').textContent = dados.nomeConcurso;
+    document.getElementById('lblCicloHoras').textContent = formatarHoras(dados.totalHorasEstudadasCiclo);
+    document.getElementById('lblCicloProgresso').textContent = `${dados.progressoGeral.toFixed(1)}%`;
+
+    // Bar
+    document.getElementById('ciclo-progress-fill').style.width = `${Math.min(dados.progressoGeral, 100)}%`;
+
+    // Button Fechar
+    const btnFechar = document.getElementById('btnFecharCiclo');
+    if (dados.progressoGeral >= 100) {
+        btnFechar.disabled = false;
+        btnFechar.classList.add('enabled');
+    } else {
+        btnFechar.disabled = true;
+        btnFechar.classList.remove('enabled');
+    }
+
+    // Grid Cards
+    const grid = document.getElementById('ciclo-materias-grid');
+    grid.innerHTML = '';
+
+    if (!dados.materias || dados.materias.length === 0) {
+        grid.innerHTML = '<p>Nenhuma matéria vinculada a este concurso.</p>';
         return;
     }
 
-    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    dados.materias.forEach(m => {
+        const card = document.createElement('div');
+        const isDone = m.saldoAtual >= m.metaHoras;
+        const statusClass = isDone ? 'status-done' : 'status-todo';
+        const progressoMateria = m.metaHoras > 0 ? Math.min((m.saldoAtual / m.metaHoras) * 100, 100) : 0;
+
+        card.className = `ciclo-card ${statusClass}`;
+        card.innerHTML = `
+            <h4>${m.nomeMateria} <span class="${isDone ? 'status-ok' : 'status-pending'}">${isDone ? 'OK' : 'Pendente'}</span></h4>
+            <div class="ciclo-card-details">
+                <span>Meta: <strong>${formatarHoras(m.metaHoras)}</strong></span>
+                <span>Saldo: <strong>${formatarHoras(m.saldoAtual)}</strong></span>
+            </div>
+            <div class="card-progress-bar">
+                <div class="card-progress-fill" style="width: ${progressoMateria}%; background-color: ${isDone ? '#4caf50' : 'var(--primary)'}"></div>
+            </div>
+            <div style="margin-top:5px; font-size:0.8rem; text-align:right; color:#888;">
+                Peso: ${m.peso}
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function formatarHoras(horasDecimal) {
+    if (!horasDecimal) return "0h";
+    const h = Math.floor(horasDecimal);
+    const m = Math.round((horasDecimal - h) * 60);
+    return `${h}h ${m > 0 ? m + 'm' : ''}`;
+}
+
+export async function fecharCicloConfirmacao() {
+    if (!concursoAtivoId) return;
+    if (!await confirmarAcao("Deseja realmente fechar este ciclo? As horas serão descontadas e um novo ciclo se iniciará.")) return;
+
+    try {
+        const res = await fetch(`${API_URL}/concursos/${concursoAtivoId}/fechar-ciclo`, {
+            method: 'POST'
+        });
+        if (res.ok) {
+            mostrarModal("Ciclo fechado com sucesso! Parabéns! 🚀");
+            carregarDashboard();
+        } else {
+            const err = await res.text();
+            mostrarModal("Erro ao fechar ciclo: " + err);
+        }
+    } catch (e) {
+        console.error(e);
+        mostrarModal("Erro de conexão.");
+    }
+}
+
+// --- TIMER & MANUAL (Mantidos e Adaptados) ---
+
+export function mudarModo(modo) {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
 
     if (modo === 'timer') {
         document.getElementById('mode-timer').style.display = 'block';
         document.getElementById('formManual').style.display = 'none';
+        const btns = document.querySelectorAll('.mode-btn');
+        if (btns[0]) btns[0].classList.add('active');
     } else {
         document.getElementById('mode-timer').style.display = 'none';
         document.getElementById('formManual').style.display = 'block';
+        const btns = document.querySelectorAll('.mode-btn');
+        if (btns[1]) btns[1].classList.add('active');
     }
 }
 
-// --- LÓGICA DO CRONÔMETRO ---
+// Timer Logic
 export function iniciarCronometro() {
-    if (isRodando) return;
-
-    if (segundosTotais === 0) {
-        const agora = new Date();
-        horaInicioTimer = agora.toTimeString().split(' ')[0];
+    const materia = document.getElementById('timer-materia').value;
+    if (!materia) {
+        alert("Selecione uma matéria!");
+        return;
     }
 
-    isRodando = true;
+    const btnStart = document.getElementById('btnStart');
+    const btnPause = document.getElementById('btnPause');
+    const status = document.getElementById('statusTimer');
 
-    document.getElementById('btnStart').style.display = 'none';
-    document.getElementById('btnPause').style.display = 'flex';
-    document.getElementById('timer-details').style.display = 'none';
+    if (btnStart) btnStart.style.display = 'none';
+    if (btnPause) btnPause.style.display = 'inline-flex';
+    if (status) {
+        status.textContent = "Estudando... Foco total! 🚀";
+        status.style.color = "#28a745";
+        status.style.fontWeight = "bold";
+    }
 
-    document.getElementById('statusTimer').innerText = "Estudando... Foco!";
-    document.getElementById('statusTimer').style.color = "#003399";
+    isPausado = false;
+    document.getElementById('timer-materia-input').disabled = true;
+    document.getElementById('timer-topico-input').disabled = true;
 
-    timerInterval = setInterval(() => {
-        segundosTotais++;
-        atualizarDisplayTimer();
-    }, 1000);
+    if (!cronometroInterval) {
+        cronometroInterval = setInterval(() => {
+            if (!isPausado) {
+                segundos++;
+                atualizarDisplayTimer();
+            }
+        }, 1000);
+    }
 }
 
 export function pausarCronometro() {
-    isRodando = false;
-    clearInterval(timerInterval);
+    isPausado = true;
+    const btnPause = document.getElementById('btnPause');
+    const status = document.getElementById('statusTimer');
 
-    document.getElementById('btnStart').style.display = 'none';
-    document.getElementById('btnPause').style.display = 'none';
-
+    if (btnPause) btnPause.style.display = 'none';
     document.getElementById('timer-details').style.display = 'block';
 
-    document.getElementById('statusTimer').innerText = "Pausado - Preencha os dados abaixo";
-    document.getElementById('statusTimer').style.color = "#ff9800";
+    if (status) {
+        status.textContent = "Pausado. O que deseja fazer?";
+        status.style.color = "#ff9800";
+    }
 }
 
 export function continuarCronometro() {
-    isRodando = true;
+    isPausado = false;
     document.getElementById('timer-details').style.display = 'none';
-    document.getElementById('btnPause').style.display = 'flex';
+    document.getElementById('btnStart').style.display = 'none';
+    document.getElementById('btnPause').style.display = 'inline-flex';
 
-    document.getElementById('statusTimer').innerText = "Estudando... Foco!";
-    document.getElementById('statusTimer').style.color = "#003399";
-
-    timerInterval = setInterval(() => {
-        segundosTotais++;
-        atualizarDisplayTimer();
-    }, 1000);
+    const status = document.getElementById('statusTimer');
+    if (status) {
+        status.textContent = "Estudando... Foco total! 🚀";
+        status.style.color = "#28a745";
+    }
 }
 
 export function cancelarCronometro() {
-    confirmarAcao("Tem certeza que deseja descartar esse tempo de estudo?", () => {
-        isRodando = false;
-        clearInterval(timerInterval);
-        segundosTotais = 0;
-        horaInicioTimer = null;
-        atualizarDisplayTimer();
+    if (!confirm("Cancelar sessão? O tempo será perdido.")) return;
+    resetarTimer();
+}
 
-        document.getElementById('timer-details').style.display = 'none';
-        document.getElementById('btnStart').style.display = 'flex';
-        document.getElementById('btnPause').style.display = 'none';
+function resetarTimer() {
+    clearInterval(cronometroInterval);
+    cronometroInterval = null;
+    segundos = 0;
+    isPausado = false;
+    atualizarDisplayTimer();
 
-        // Clear inputs
-        ['timer-materia', 'timer-topico', 'timer-tipo'].forEach(id => {
-            document.getElementById(id).value = "";
-            document.getElementById(`${id}-input`).value = "";
-        });
+    document.getElementById('timer-details').style.display = 'none';
+    document.getElementById('btnStart').style.display = 'inline-flex';
+    document.getElementById('btnPause').style.display = 'none';
+    const status = document.getElementById('statusTimer');
+    if (status) {
+        status.textContent = "Bora estudar?";
+        status.style.color = "#888";
+    }
 
-        document.getElementById('timer-qFeitas').value = "";
-        document.getElementById('timer-qCertas').value = "";
-        document.getElementById('timer-anotacoes').value = "";
-
-        document.getElementById('statusTimer').innerText = "Bora estudar?";
-        document.getElementById('statusTimer').style.color = "#888";
-    });
+    document.getElementById('timer-materia-input').disabled = false;
+    document.getElementById('timer-topico-input').disabled = false;
 }
 
 function atualizarDisplayTimer() {
-    const horas = Math.floor(segundosTotais / 3600);
-    const minutos = Math.floor((segundosTotais % 3600) / 60);
-    const segundos = segundosTotais % 60;
+    const h = Math.floor(segundos / 3600);
+    const m = Math.floor((segundos % 3600) / 60);
+    const s = segundos % 60;
 
-    document.getElementById('display-horas').innerText = String(horas).padStart(2, '0');
-    document.getElementById('display-minutos').innerText = String(minutos).padStart(2, '0');
-    document.getElementById('display-segundos').innerText = String(segundos).padStart(2, '0');
-}
-
-// --- SALVAR COM VERIFICAÇÃO DE NOVOS ITENS ---
-
-async function ensureId(mode, type, name) {
-    const idField = document.getElementById(`${mode}-${type}`);
-    if (idField.value) return idField.value; // Already has ID
-
-    if (!name) return null; // Empty
-
-    // Create new - USING CUSTOM CONFIRMATION IS TRICKY HERE because confirmAcao is async callback based.
-    // We need to wrap it in a Promise to await it.
-
-    return new Promise((resolve) => {
-        confirmarAcao(`"${name}" não existe. Deseja criar como novo?`, async () => {
-            let url, body;
-            if (type === 'materia') {
-                url = `${API_URL}/materias`;
-                body = { nome: name };
-            } else if (type === 'tipo') {
-                url = `${API_URL}/tipos-estudo`;
-                body = { nome: name };
-            } else if (type === 'topico') {
-                const materiaId = document.getElementById(`${mode}-materia`).value;
-                if (!materiaId) {
-                    mostrarModal("Erro", "Selecione uma matéria existente antes de criar um tópico.");
-                    resolve(null);
-                    return;
-                }
-                url = `${API_URL}/topicos`;
-                body = { descricao: name, materia: { id: materiaId } };
-            }
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                if (response.ok) {
-                    const created = await response.json();
-                    // Refresh cache
-                    if (type === 'materia' || type === 'topico') await carregarMaterias();
-                    if (type === 'tipo') await carregarTiposEstudo();
-                    resolve(created.id);
-                } else {
-                    resolve(null);
-                }
-            } catch (e) {
-                console.error(e);
-                resolve(null);
-            }
-        });
-        // If user cancels, we need to handle that too, but confirmarAcao currently doesn't have a cancel callback.
-        // For now, if they cancel, the promise hangs or we need to modify confirmarAcao.
-        // Let's modify confirmarAcao in utils.js later or assume user will click confirm.
-        // Actually, to be safe, let's assume if they don't confirm, we return null.
-        // But since I can't easily change the modal logic to be synchronous, I will modify confirmarAcao to accept a cancel callback or just use a flag.
-        // For simplicity in this refactor, I will use a modified version of ensureId that assumes confirmation for now or I will update utils.js to support cancel callback.
-        // Let's update utils.js to support cancel callback.
-    });
+    document.getElementById('display-horas').textContent = String(h).padStart(2, '0');
+    document.getElementById('display-minutos').textContent = String(m).padStart(2, '0');
+    document.getElementById('display-segundos').textContent = String(s).padStart(2, '0');
 }
 
 export async function salvarTimer() {
-    const materiaNome = document.getElementById("timer-materia-input").value;
-    // We need to handle the async nature of ensureId with the modal.
-    // This is complex. For now, let's assume the user MUST select from list or we use the standard confirm for this specific flow 
-    // OR we update `ensureId` to be fully async with the modal.
+    const materiaId = document.getElementById('timer-materia').value;
+    const topicoId = document.getElementById('timer-topico').value || null;
+    const tipoId = document.getElementById('timer-tipo').value;
+    const qFeitas = document.getElementById('timer-qFeitas').value || 0;
+    const qCertas = document.getElementById('timer-qCertas').value || 0;
+    const anotacoes = document.getElementById('timer-anotacoes').value;
 
-    // Let's try to make ensureId work with the modal.
-    // I will use a helper function that returns a promise for the modal.
+    const agora = new Date();
+    const h = Math.floor(segundos / 3600);
+    const m = Math.floor((segundos % 3600) / 60);
+    const duracaoStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    const inicioMs = agora.getTime() - (segundos * 1000);
+    const dataInicio = new Date(inicioMs);
+    const horaInicioStr = dataInicio.toTimeString().split(' ')[0].substring(0, 5);
+    const diaStr = dataInicio.toISOString().split('T')[0];
 
-    const materiaId = await ensureIdWithModal('timer', 'materia', materiaNome);
+    if (!materiaId) { alert("Matéria obrigatória"); return; }
 
-    if (!materiaId && materiaNome) return; // User cancelled or error
-    if (!materiaId && !materiaNome) {
-        mostrarModal("Atenção", "Selecione ou crie uma matéria válida!");
+    if (!concursoAtivoId) {
+        alert("Nenhum concurso ativo identificado. Recarregue a página.");
         return;
     }
 
-    const topicoNome = document.getElementById("timer-topico-input").value;
-    const topicoId = await ensureIdWithModal('timer', 'topico', topicoNome);
-
-    const tipoNome = document.getElementById("timer-tipo-input").value;
-    const tipoId = await ensureIdWithModal('timer', 'tipo', tipoNome);
-
-    const registro = {
-        data: new Date().toISOString().split('T')[0],
-        horaInicio: horaInicioTimer,
-        materiaId: materiaId,
-        topicoId: topicoId,
-        tipoEstudoId: tipoId,
-        cargaHoraria: getTempoFormatado(segundosTotais),
-        questoesFeitas: document.getElementById("timer-qFeitas").value || 0,
-        questoesCertas: document.getElementById("timer-qCertas").value || 0,
-        anotacoes: document.getElementById("timer-anotacoes").value
+    const payload = {
+        concursoId: concursoAtivoId,
+        materiaId: parseInt(materiaId),
+        topicoId: topicoId ? parseInt(topicoId) : null,
+        topicoNome: document.getElementById('timer-topico-input').value,
+        tipoEstudoId: tipoId ? parseInt(tipoId) : null,
+        data: diaStr,
+        horaInicio: horaInicioStr,
+        tempoEstudado: duracaoStr,
+        qtdQuestoes: parseInt(qFeitas),
+        qtdAcertos: parseInt(qCertas),
+        anotacoes: anotacoes
     };
 
-    await enviarRegistro(registro, true);
+    try {
+        const res = await fetch(`${API_URL}/estudos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            mostrarModal("Estudo registrado com sucesso!");
+            resetarTimer();
+            carregarDashboard();
+        } else {
+            const txt = await res.text();
+            mostrarModal("Erro ao salvar: " + txt);
+        }
+    } catch (e) {
+        console.error(e);
+        mostrarModal("Erro de conexão.");
+    }
 }
 
 export async function salvarManual(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
-    const materiaNome = document.getElementById("manual-materia-input").value;
-    const materiaId = await ensureIdWithModal('manual', 'materia', materiaNome);
+    const materiaId = document.getElementById('manual-materia').value;
+    const topicoId = document.getElementById('manual-topico').value || null;
+    const data = document.getElementById('manual-data').value;
+    const inicio = document.getElementById('manual-horaInicio').value;
+    const duracao = document.getElementById('manual-duracao').value;
+    const tipoId = document.getElementById('manual-tipo').value;
+    const qFeitas = document.getElementById('manual-qFeitas').value || 0;
+    const qCertas = document.getElementById('manual-qCertas').value || 0;
+    const anotacoes = document.getElementById('manual-anotacoes').value;
 
-    if (!materiaId && materiaNome) return;
-    if (!materiaId && !materiaNome) {
-        mostrarModal("Atenção", "Selecione ou crie uma matéria válida!");
+    if (!document.getElementById('manual-materia-input').value) {
+        alert("Preencha a matéria");
         return;
     }
 
-    const topicoNome = document.getElementById("manual-topico-input").value;
-    const topicoId = await ensureIdWithModal('manual', 'topico', topicoNome);
+    if (!concursoAtivoId) {
+        // Tentar obter
+        const resC = await fetch(`${API_URL}/concursos/ativo`);
+        if (resC.status === 200) {
+            const c = await resC.json();
+            concursoAtivoId = c.id;
+        } else {
+            alert("Nenhum concurso ativo. Crie um concurso primeiro.");
+            return;
+        }
+    }
 
-    const tipoNome = document.getElementById("manual-tipo-input").value;
-    const tipoId = await ensureIdWithModal('manual', 'tipo', tipoNome);
-
-    const registro = {
-        data: document.getElementById("manual-data").value,
-        horaInicio: document.getElementById("manual-horaInicio").value + ":00",
-        materiaId: materiaId,
-        topicoId: topicoId,
-        tipoEstudoId: tipoId,
-        cargaHoraria: document.getElementById("manual-duracao").value,
-        questoesFeitas: document.getElementById("manual-qFeitas").value || 0,
-        questoesCertas: document.getElementById("manual-qCertas").value || 0,
-        anotacoes: document.getElementById("manual-anotacoes").value
+    const payload = {
+        concursoId: concursoAtivoId,
+        materiaId: parseInt(materiaId),
+        topicoId: topicoId ? parseInt(topicoId) : null,
+        topicoNome: document.getElementById('manual-topico-input').value,
+        tipoEstudoId: tipoId ? parseInt(tipoId) : null,
+        data: data,
+        horaInicio: inicio,
+        tempoEstudado: duracao,
+        qtdQuestoes: parseInt(qFeitas),
+        qtdAcertos: parseInt(qCertas),
+        anotacoes: anotacoes
     };
 
-    await enviarRegistro(registro, false);
-}
-
-// Helper to wrap modal in promise
-function ensureIdWithModal(mode, type, name) {
-    const idField = document.getElementById(`${mode}-${type}`);
-    if (idField.value) return Promise.resolve(idField.value);
-    if (!name) return Promise.resolve(null);
-
-    return new Promise((resolve) => {
-        // Custom confirm logic
-        const titleEl = document.getElementById('modal-title');
-        const msgEl = document.getElementById('modal-message');
-        const actions = document.getElementById('modal-actions');
-        const overlay = document.getElementById('modal-overlay');
-
-        if (titleEl) titleEl.innerText = "Novo Item";
-        if (msgEl) msgEl.innerText = `"${name}" não existe. Deseja criar como novo?`;
-
-        if (actions) {
-            actions.innerHTML = '';
-            const btnCancel = document.createElement('button');
-            btnCancel.className = 'btn-modal-cancel';
-            btnCancel.innerText = 'Cancelar';
-            btnCancel.onclick = () => {
-                document.getElementById('modal-overlay').style.display = 'none';
-                resolve(null);
-            };
-
-            const btnOk = document.createElement('button');
-            btnOk.className = 'btn-modal-ok';
-            btnOk.innerText = 'Criar';
-            btnOk.onclick = async () => {
-                document.getElementById('modal-overlay').style.display = 'none';
-                // Create logic here
-                let url, body;
-                if (type === 'materia') {
-                    url = `${API_URL}/materias`;
-                    body = { nome: name };
-                } else if (type === 'tipo') {
-                    url = `${API_URL}/tipos-estudo`;
-                    body = { nome: name };
-                } else if (type === 'topico') {
-                    const materiaId = document.getElementById(`${mode}-materia`).value;
-                    if (!materiaId) {
-                        mostrarModal("Erro", "Selecione uma matéria existente antes de criar um tópico.");
-                        resolve(null);
-                        return;
-                    }
-                    url = `${API_URL}/topicos`;
-                    body = { descricao: name, materia: { id: materiaId } };
-                }
-
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(body)
-                    });
-                    if (response.ok) {
-                        const created = await response.json();
-                        if (type === 'materia' || type === 'topico') await carregarMaterias();
-                        if (type === 'tipo') await carregarTiposEstudo();
-                        resolve(created.id);
-                    } else {
-                        resolve(null);
-                    }
-                } catch (e) { console.error(e); resolve(null); }
-            };
-
-            actions.appendChild(btnCancel);
-            actions.appendChild(btnOk);
-        }
-        if (overlay) overlay.style.display = 'flex';
-    });
-}
-
-async function enviarRegistro(registro, isTimer) {
     try {
-        const response = await fetch(`${API_URL}/estudos`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(registro)
+        const res = await fetch(`${API_URL}/estudos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
 
-        if (response.ok) {
-            mostrarModal("Sucesso", `Estudo salvo com sucesso!\nTempo: ${registro.cargaHoraria}`);
+        if (res.ok) {
+            mostrarModal("Registro manual salvo!");
+            document.getElementById('formManual').reset();
+            document.getElementById("manual-data").valueAsDate = new Date();
+
+            document.getElementById('manual-materia').value = '';
+            document.getElementById('manual-topico').value = '';
+            document.getElementById('manual-tipo').value = '';
+
             carregarDashboard();
-
-            if (isTimer) {
-                isRodando = false;
-                clearInterval(timerInterval);
-                segundosTotais = 0;
-                horaInicioTimer = null;
-                // Reset display manually since we don't export atualizarDisplayTimer
-                document.getElementById('display-horas').innerText = '00';
-                document.getElementById('display-minutos').innerText = '00';
-                document.getElementById('display-segundos').innerText = '00';
-
-                document.getElementById('timer-details').style.display = 'none';
-                document.getElementById('btnStart').style.display = 'flex';
-                document.getElementById('statusTimer').innerText = "Bora estudar?";
-
-                // Clear inputs
-                ['timer-materia', 'timer-topico', 'timer-tipo'].forEach(id => {
-                    document.getElementById(id).value = "";
-                    document.getElementById(`${id}-input`).value = "";
-                });
-                document.getElementById('timer-qFeitas').value = "";
-                document.getElementById('timer-qCertas').value = "";
-                document.getElementById('timer-anotacoes').value = "";
-            } else {
-                document.getElementById("formManual").reset();
-                document.getElementById("manual-data").valueAsDate = new Date();
-                // Clear hidden inputs too
-                ['manual-materia', 'manual-topico', 'manual-tipo'].forEach(id => {
-                    document.getElementById(id).value = "";
-                });
-            }
         } else {
-            mostrarModal("Erro", "Erro ao salvar. Verifique os dados.");
+            const txt = await res.text();
+            mostrarModal("Erro: " + txt);
         }
-    } catch (error) {
-        console.error(error);
-        mostrarModal("Erro", "Erro de conexão.");
+    } catch (err) {
+        console.error(err);
+        mostrarModal("Erro de conexão.");
     }
 }

@@ -30,13 +30,22 @@ public class RegistroEstudoService {
         return userRepository.findByEmail(email).orElseThrow();
     }
 
+    @Autowired
+    private com.concurso.aprovaflow.repository.ConcursoRepository concursoRepository;
+
     public RegistroEstudo registrar(RegistroEstudo novoRegistro) {
-        Ciclo cicloAtual = cicloService.buscarCicloAtivo();
-        novoRegistro.setCiclo(cicloAtual);
-        novoRegistro.setUser(getUsuarioLogado());
+        User user = getUsuarioLogado();
+        
+        // Busca concurso ativo do usuário
+        com.concurso.aprovaflow.model.Concurso concursoAtivo = concursoRepository.findByAtivoTrueAndUser(user)
+                .orElseThrow(() -> new RuntimeException("Nenhum concurso ativo encontrado para registrar o estudo!"));
+        
+        novoRegistro.setConcurso(concursoAtivo);
+        novoRegistro.setUser(user);
         
         if (novoRegistro.getQuestoesFeitas() != null && novoRegistro.getQuestoesFeitas() > 0) {
-            int total = novoRegistro.getQuestoesCertas() + novoRegistro.getQuestoesErradas();
+            int total = (novoRegistro.getQuestoesCertas() != null ? novoRegistro.getQuestoesCertas() : 0) 
+                      + (novoRegistro.getQuestoesErradas() != null ? novoRegistro.getQuestoesErradas() : 0);
             if (total != novoRegistro.getQuestoesFeitas()) {
                 throw new IllegalArgumentException("A soma de certas + erradas não bate com o total feito!");
             }
@@ -46,11 +55,10 @@ public class RegistroEstudoService {
     }
 
     public List<RegistroEstudo> listarDoCicloAtual() {
-        Ciclo cicloAtual = cicloService.buscarCicloAtivo();
-        if (cicloAtual == null) {
-            return List.of();
-        }
-        return repository.findByCicloIdAndUser(cicloAtual.getId(), getUsuarioLogado());
+        User user = getUsuarioLogado();
+        return concursoRepository.findByAtivoTrueAndUser(user)
+                .map(c -> repository.findByConcursoIdAndUser(c.getId(), user))
+                .orElse(List.of());
     }
 
     public String calcularTotalHorasCiclo() {
