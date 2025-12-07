@@ -20,6 +20,7 @@ export async function carregarConcursos() {
         renderizarListaConcursos(concursos);
     } catch (e) {
         console.error(e);
+        document.getElementById('lista-concursos-perfil').innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar</p>';
     }
 }
 
@@ -35,24 +36,25 @@ function renderizarListaConcursos(lista) {
     lista.forEach(c => {
         const item = document.createElement('div');
         item.className = 'concurso-item';
-        item.style.padding = '15px';
-        item.style.borderBottom = '1px solid #eee';
-        item.style.display = 'flex';
-        item.style.justifyContent = 'space-between';
-        item.style.alignItems = 'center';
 
-        const activeBadge = c.ativo ? '<span style="color:#4caf50; font-size:0.8rem; border:1px solid #4caf50; padding:2px 6px; border-radius:4px;">ATIVO</span>' : '';
+        const activeBadge = c.ativo
+            ? '<span class="badge-active">ATIVO</span>'
+            : '';
+
+        // Botão Play ou Pause logic
+        const toggleBtn = !c.ativo
+            ? `<button onclick="ativarConcurso(${c.id})" class="btn-icon-subtle active-toggle" title="Ativar"><span class="material-icons">play_circle</span></button>`
+            : `<button class="btn-icon-subtle" title="Já está ativo (clique para pausar - futuro)" disabled><span class="material-icons" style="color:#ccc">check_circle</span></button>`;
 
         item.innerHTML = `
-            <div>
-                <strong style="font-size:1.1rem; color: #333;">${c.nome}</strong>
-                ${activeBadge}
-                <div style="font-size:0.85rem; color:#666;">Carga Ciclo: ${c.cargaHorariaCiclo || '-'}h</div>
+            <div class="concurso-info">
+                <strong>${c.nome} ${activeBadge}</strong>
+                <span>Carga Ciclo: ${c.cargaHorariaCiclo || '-'}h</span>
             </div>
-            <div style="display:flex; gap:10px;">
-                ${!c.ativo ? `<button onclick="ativarConcurso(${c.id})" style="border:none; background:none; cursor:pointer; color:#4caf50;" title="Ativar"><span class="material-icons">play_circle</span></button>` : ''}
-                <button onclick="abrirConfigConcurso(${c.id})" style="border:none; background:none; cursor:pointer; color:#ff9800;" title="Configurar Matérias"><span class="material-icons">settings</span></button>
-                <button onclick="excluirConcurso(${c.id})" style="border:none; background:none; cursor:pointer; color:#f44336;" title="Excluir"><span class="material-icons">delete</span></button>
+            <div class="concurso-actions">
+                ${toggleBtn}
+                <button onclick="abrirConfigConcurso(${c.id})" class="btn-icon-subtle" title="Configurar Matérias"><span class="material-icons">settings</span></button>
+                <button onclick="excluirConcurso(${c.id})" class="btn-icon-subtle delete" title="Excluir"><span class="material-icons">delete</span></button>
             </div>
         `;
         div.appendChild(item);
@@ -138,7 +140,6 @@ export async function abrirConfigConcurso(id) {
     document.getElementById('config-concurso-id').value = id;
     document.getElementById('modal-config-concurso').style.display = 'flex';
 
-    // Preencher Select de Matérias
     const select = document.getElementById('config-select-materia');
     select.innerHTML = '<option value="">Carregando...</option>';
 
@@ -163,7 +164,7 @@ export async function abrirConfigConcurso(id) {
 
 async function carregarMateriasVinculadas(id) {
     const ul = document.getElementById('lista-materias-config');
-    ul.innerHTML = '<li>Carregando...</li>';
+    ul.innerHTML = '<li style="padding:10px;">Carregando...</li>';
 
     try {
         const res = await fetch(`${API_URL}/concursos/${id}/ciclo-atual`);
@@ -174,21 +175,21 @@ async function carregarMateriasVinculadas(id) {
         if (ciclo.materias && ciclo.materias.length > 0) {
             ciclo.materias.sort((a, b) => a.ordem - b.ordem).forEach(m => {
                 const li = document.createElement('li');
-                li.style.padding = '10px';
-                li.style.borderBottom = '1px solid #f0f0f0';
-                li.style.display = 'flex';
-                li.style.justifyContent = 'space-between';
+                li.className = 'linked-materia-item';
                 li.innerHTML = `
-                    <span>${m.nomeMateria} <small style="color:#888;">(Peso ${m.peso}, Ordem ${m.ordem})</small></span>
-                    <span style="color:#888; font-size:0.8rem;">Vinculado</span>
+                    <div>
+                        <span class="materia-name">${m.nomeMateria}</span>
+                        <span class="materia-meta">Peso ${m.peso}</span>
+                    </div>
+                    <span class="status-ok" style="font-size:0.75rem;">Vinculado</span>
                 `;
                 ul.appendChild(li);
             });
         } else {
-            ul.innerHTML = '<li style="padding:10px; color:#888;">Nenhuma matéria vinculada. Adicione acima.</li>';
+            ul.innerHTML = '<li style="padding:15px; color:#888; text-align:center;">Nenhuma matéria vinculada. Adicione acima.</li>';
         }
     } catch (e) {
-        ul.innerHTML = '<li>Erro ao carregar vinculadas ou ciclo zerado.</li>';
+        ul.innerHTML = '<li style="padding:10px; color:red;">Erro ao carregar vinculadas ou ciclo zerado.</li>';
     }
 }
 
