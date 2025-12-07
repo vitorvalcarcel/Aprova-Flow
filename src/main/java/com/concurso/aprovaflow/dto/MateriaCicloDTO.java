@@ -30,11 +30,17 @@ public class MateriaCicloDTO {
     private Double progressoQuestoes;
     
     // Auxiliar para ordenação visual
+    // Auxiliar
+    private Long id; // ID do Vinculo (ConcursoMateria)
     private Integer ordem;
+    
+    // Novo campo
+    private Integer questoesProva;
 
     // Construtor utilitário
-    public MateriaCicloDTO(Materia materia, Double peso, Double metaHoras, Double horasEstudadas, Double horasDescontadas, 
-                           Double metaQuestoes, Integer questoesFeitas, Integer questoesDescontadas, Integer ordem) {
+    public MateriaCicloDTO(Long vinculoId, Materia materia, Double peso, Double metaHoras, Double horasEstudadas, Double horasDescontadas, 
+                           Double metaQuestoes, Integer questoesFeitas, Integer questoesDescontadas, Integer ordem, Integer questoesProva) {
+        this.id = vinculoId;
         this.materiaId = materia.getId();
         this.nomeMateria = materia.getNome();
         this.peso = peso;
@@ -42,6 +48,7 @@ public class MateriaCicloDTO {
         this.horasEstudadasTotal = horasEstudadas;
         this.horasDescontadas = horasDescontadas;
         this.ordem = ordem;
+        this.questoesProva = questoesProva;
         
         // Dados Questões
         this.metaQuestoes = metaQuestoes;

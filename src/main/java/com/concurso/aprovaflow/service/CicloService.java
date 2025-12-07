@@ -123,7 +123,13 @@ public class CicloService {
 
         for (ConcursoMateria cm : configMaterias) {
             Double peso = cm.getPeso() != null ? cm.getPeso() : 0.0;
-            Double metaHoras = (peso / somaPesosFinal) * cargaHorariaCiclo;
+            Double metaHoras;
+            
+            if (cm.getHorasCiclo() != null && cm.getHorasCiclo() > 0) {
+                 metaHoras = cm.getHorasCiclo();
+            } else {
+                 metaHoras = (peso / somaPesosFinal) * cargaHorariaCiclo;
+            }
             Double metaQuestoesMat = (peso / somaPesosFinal) * metaQuestoesCiclo;
             
             Double totalEstudado = horasEstudadasMap.getOrDefault(cm.getMateria().getId(), 0.0);
@@ -133,6 +139,7 @@ public class CicloService {
             Integer totalQDescontadas = questoesDescontadasMap.getOrDefault(cm.getMateria().getId(), 0);
             
             materiaDTOs.add(new MateriaCicloDTO(
+                    cm.getId(),
                     cm.getMateria(),
                     peso,
                     metaHoras,
@@ -141,7 +148,8 @@ public class CicloService {
                     metaQuestoesMat,
                     totalQFeitas,
                     totalQDescontadas,
-                    cm.getOrdem() != null ? cm.getOrdem() : 999
+                    cm.getOrdem() != null ? cm.getOrdem() : 999,
+                    cm.getQuestoesProva()
             ));
         }
         

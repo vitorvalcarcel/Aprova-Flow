@@ -47,17 +47,14 @@ public class ConcursoController {
         Optional<Concurso> concursoOpt = service.buscarPorId(id);
         if (concursoOpt.isEmpty()) return ResponseEntity.notFound().build();
         
-        // Busca materia. Precisamos de um findById no MateriaService ou usar repository direto?
-        // Vamos assumir que MateriaService tem ou repository direto.
-        // O MateriaService atual NÃO TEM buscarPorId público simples que retorne Optional.
-        // Vou improvisar buscando do repository se precisar ou criar metodo no service depois.
-        // Para simplificar, vou usar materiaService.listarTodas() e filtrar (não performatico mas funciona agora) ou melhor: injetar MateriaRepository aqui? Não, anti-pattern.
-        // Melhor adicionar buscarPorId no MateriaService rapidinho depois. 
-        // Por hora, vou assumir que vou adicionar esse metodo no service.
         com.concurso.aprovaflow.model.Materia materia = materiaService.buscarPorId(dto.getMateriaId());
         
-        var vinculado = concursoMateriaService.vincular(concursoOpt.get(), materia, dto.getPeso(), dto.getOrdem());
-        return ResponseEntity.ok(vinculado);
+        try {
+            var vinculado = concursoMateriaService.vincular(concursoOpt.get(), materia, dto.getPeso(), dto.getOrdem(), dto.getQuestoesProva(), dto.getHorasCiclo());
+            return ResponseEntity.ok(vinculado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
     
     @GetMapping("/{id}/ciclo-atual")
@@ -111,6 +108,15 @@ public class ConcursoController {
         try {
             Concurso atualizado = service.atualizarConcurso(id, dto);
             return ResponseEntity.ok(atualizado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @DeleteMapping("/vinculos/{id}")
+    public ResponseEntity<?> excluirVinculo(@PathVariable Long id) {
+        try {
+            concursoMateriaService.desvincular(id);
+            return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

@@ -24,4 +24,8 @@ public class ConcursoMateria {
     private Double peso;
 
     private Integer ordem;
+
+    private Integer questoesProva;
+
+    private Double horasCiclo;
 }

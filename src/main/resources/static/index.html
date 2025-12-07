@@ -28,6 +28,9 @@
             <button class="nav-btn" id="nav-historico" onclick="mudarAba('historico')">
                 <span class="material-icons">history</span> Histórico
             </button>
+            <button class="nav-btn" id="nav-concursos" onclick="mudarAba('concursos')">
+                <span class="material-icons">assignment</span> Meus Concursos
+            </button>
             <button class="nav-btn" id="nav-perfil" onclick="mudarAba('perfil')">
                 <span class="material-icons">person</span> Meu Perfil
             </button>
@@ -241,6 +244,19 @@
                 </div>
             </section>
 
+            <!-- CONCURSOS SECTION -->
+            <section id="sec-concursos" style="display: none;">
+                <div class="concursos-header">
+                    <h2>📚 Meus Concursos</h2>
+                    <button class="btn-primary" onclick="abrirModalNovoConcurso()">
+                        <span class="material-icons">add</span> Novo Concurso
+                    </button>
+                </div>
+                <div id="lista-meus-concursos" class="concursos-list-container">
+                    <p class="loading-text">Carregando concursos...</p>
+                </div>
+            </section>
+
             <!-- HISTORY SECTION -->
             <section id="sec-historico" style="display: none;">
                 <div class="history-container">
@@ -320,21 +336,7 @@
                         </div>
 
 
-                        <!-- CONCURSOS CARD -->
-                        <div class="profile-card">
-                            <div class="card-header-gradient"
-                                style="background: linear-gradient(135deg, #f57c00, #ff9800);">
-                                <h3 style="margin:0; color:white; font-weight:500;">Meus Concursos</h3>
-                            </div>
-                            <div class="profile-body">
-                                <div id="lista-concursos-perfil">
-                                    <p style="text-align:center; color:#999; padding:10px;">Carregando...</p>
-                                </div>
-                                <button class="btn-new-concurso" onclick="abrirModalNovoConcurso()">
-                                    <span class="material-icons">add_circle</span> Novo Concurso
-                                </button>
-                            </div>
-                        </div>
+                        <!-- CONCURSOS CARD REMOVED -->
                     </div>
 
                     <!-- RIGHT COLUMN -->

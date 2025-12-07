@@ -7,4 +7,6 @@ public class VinculoMateriaDTO {
     private Long materiaId;
     private Double peso;
     private Integer ordem;
+    private Integer questoesProva;
+    private Double horasCiclo;
 }
