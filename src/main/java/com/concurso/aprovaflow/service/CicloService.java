@@ -60,13 +60,23 @@ public class CicloService {
         
         if (somaPesos == 0) somaPesos = 1.0; // Evitar divisão por zero
 
-        // 2. Buscar dados brutos
-        List<RegistroEstudo> registroEstudos = registroEstudoRepository.findByConcursoId(concurso.getId());
-        
-        // Buscar todos os históricos de ciclos fechados para este concurso
-        // Como o histórico liga ao CICLO, primeiro pegamos os ciclos do concurso
+        // 1.1 Calcular Meta de Questões do Ciclo Atual
+        // Meta = Inicial + (Incremento * nrCiclosFechados)
+        // Precisamos saber quantos ciclos foram fechados para calcular o incremento
+        // A query de ciclosFechados vem abaixo, vamos antecipar ou usar a lista depois.
+        // Vamos mover a busca de ciclosFechados para CIMA.
+
         List<Ciclo> ciclosFechados = cicloRepository.findAllByConcurso(concurso);
         List<Long> ciclosIds = ciclosFechados.stream().map(Ciclo::getId).toList();
+
+        // 2. Calcular Meta de Questões para este ciclo
+        int metaBase = concurso.getQuestoesMetaInicial() != null ? concurso.getQuestoesMetaInicial() : 0;
+        int incremento = concurso.getQuestoesIncremento() != null ? concurso.getQuestoesIncremento() : 0;
+        int numeroCiclos = ciclosIds.size(); // Ciclos já fechados
+        double metaQuestoesCiclo = metaBase + (incremento * numeroCiclos);
+        
+        // 3. Buscar dados brutos
+        List<RegistroEstudo> registroEstudos = registroEstudoRepository.findByConcursoId(concurso.getId());
         
         List<CicloHistorico> historicos = new ArrayList<>();
         if (!ciclosIds.isEmpty()) {
@@ -93,6 +103,20 @@ public class CicloService {
                         Collectors.summingDouble(CicloHistorico::getHorasDescontadas)
                 ));
 
+        Map<Long, Integer> questoesFeitasMap = registroEstudos.stream()
+                .filter(r -> r.getMateria() != null && r.getQuestoesFeitas() != null)
+                .collect(Collectors.groupingBy(
+                        r -> r.getMateria().getId(),
+                        Collectors.summingInt(RegistroEstudo::getQuestoesFeitas)
+                ));
+
+        Map<Long, Integer> questoesDescontadasMap = historicos.stream()
+                .filter(h -> h.getMateria() != null && h.getQuestoesDescontadas() != null)
+                .collect(Collectors.groupingBy(
+                        h -> h.getMateria().getId(),
+                        Collectors.summingInt(CicloHistorico::getQuestoesDescontadas)
+                ));
+
         // 4. Montar DTOs das matérias
         List<MateriaCicloDTO> materiaDTOs = new ArrayList<>();
         double somaPesosFinal = somaPesos;
@@ -100,9 +124,13 @@ public class CicloService {
         for (ConcursoMateria cm : configMaterias) {
             Double peso = cm.getPeso() != null ? cm.getPeso() : 0.0;
             Double metaHoras = (peso / somaPesosFinal) * cargaHorariaCiclo;
+            Double metaQuestoesMat = (peso / somaPesosFinal) * metaQuestoesCiclo;
             
             Double totalEstudado = horasEstudadasMap.getOrDefault(cm.getMateria().getId(), 0.0);
             Double totalDescontado = horasDescontadasMap.getOrDefault(cm.getMateria().getId(), 0.0);
+
+            Integer totalQFeitas = questoesFeitasMap.getOrDefault(cm.getMateria().getId(), 0);
+            Integer totalQDescontadas = questoesDescontadasMap.getOrDefault(cm.getMateria().getId(), 0);
             
             materiaDTOs.add(new MateriaCicloDTO(
                     cm.getMateria(),
@@ -110,6 +138,9 @@ public class CicloService {
                     metaHoras,
                     totalEstudado,
                     totalDescontado,
+                    metaQuestoesMat,
+                    totalQFeitas,
+                    totalQDescontadas,
                     cm.getOrdem() != null ? cm.getOrdem() : 999
             ));
         }
@@ -140,11 +171,17 @@ public class CicloService {
         CicloAtualDTO dadosAtuais = getDadosCicloAtual(concurso);
         
         // Validação: Todas as matérias atingiram a meta?
-        boolean podeFechar = dadosAtuais.getMaterias().stream()
+        boolean horasOk = dadosAtuais.getMaterias().stream()
                 .allMatch(m -> m.getSaldoAtual() >= m.getMetaHoras() - 0.01); // 0.01 tolerância float
         
-        if (!podeFechar) {
-            throw new RuntimeException("Não é possível fechar o ciclo. Meta de horas não atingida em todas as matérias.");
+        boolean questoesOk = dadosAtuais.getMaterias().stream()
+                .allMatch(m -> m.getSaldoQuestoes() >= m.getMetaQuestoes() - 0.5); // 0.5 tolerância arredondamento no double
+
+        if (!horasOk) {
+            throw new RuntimeException("Não é possível fechar o ciclo. Meta de HORAS não atingida em todas as matérias.");
+        }
+        if (!questoesOk) {
+            throw new RuntimeException("Não é possível fechar o ciclo. Meta de QUESTÕES não atingida em todas as matérias.");
         }
 
         // Criar Novo Ciclo Arquivado
@@ -175,7 +212,10 @@ public class CicloService {
             
             // O desconto é EXATAMENTE a META. O excedente fica como saldo inicial do próximo (automaticamente pelo calculo de subtração)
             hist.setHorasDescontadas(mDTO.getMetaHoras()); 
-            hist.setQuestoesDescontadas(0); // TODO: Implementar lógica de questões depois se necessário
+            
+            // Questões: descontamos também a meta (arredondada, já que no historico é Integer)
+            // Se a meta for 33.3, arredondamos para 33. Se for 33.7, para 34.
+            hist.setQuestoesDescontadas((int) Math.round(mDTO.getMetaQuestoes()));
             
             cicloHistoricoRepository.save(hist);
         }

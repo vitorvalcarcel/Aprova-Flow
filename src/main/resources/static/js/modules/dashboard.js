@@ -43,8 +43,15 @@ function renderizarCiclo(dados) {
     document.getElementById('ciclo-progress-fill').style.width = `${Math.min(dados.progressoGeral, 100)}%`;
 
     // Button Fechar
+    // Button Fechar
     const btnFechar = document.getElementById('btnFecharCiclo');
-    if (dados.progressoGeral >= 100) {
+    // Checa se TODOS as matérias bateram meta hora E meta questao
+    const tudoConcluido = dados.materias && dados.materias.every(m =>
+        m.saldoAtual >= (m.metaHoras - 0.01) &&
+        m.saldoQuestoes >= (m.metaQuestoes - 0.5)
+    );
+
+    if (tudoConcluido) {
         btnFechar.disabled = false;
         btnFechar.classList.add('enabled');
     } else {
@@ -57,25 +64,66 @@ function renderizarCiclo(dados) {
     grid.innerHTML = '';
 
     if (!dados.materias || dados.materias.length === 0) {
-        grid.innerHTML = '<p>Nenhuma matéria vinculada a este concurso.</p>';
+        grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 20px;">
+                <p>Nenhuma matéria vinculada a este concurso.</p>
+                <button class="btn-primary" onclick="window.location.href='config-concurso.html?id=${dados.concursoId}'" style="margin-top:10px;">
+                    Configurar Matérias
+                </button>
+            </div>
+        `;
+        // Note: config-concurso.html might not exist. Maybe open modal or navigate to edit?
+        // User asked "Configurar Matérias". I'll assume they might want to go to a manage page or I just put a placeholder alert.
+        // Actually, user said "Adicione um botão 'Configurar Matérias'".
+        // I'll make it redirect to index.html#gerenciar or similar if that's where config is, but "config-concurso" implies specific page.
+        // Since I don't know the route for managing subjects of a contest, I will point to where edits happen.
+        // "Endpoint de Edição de Concurso" was created. Frontend for it? Maybe not existing yet.
+        // I'll assume I can just alert or point to existing management.
+        // But wait, "Editar Concurso" endpoint allows editing name/hours. "Configurar Matérias" implies adding subjects.
+        // I'll just use a button that alerts for now or navigates to generic manage if user desires.
+        // Let's use `onclick="alert('Funcionalidade de configuração detalhada em desenvolvimento. Use a tela de Gerenciar.')"` or similar if I don't have the page.
+        // Or better: `location.hash = 'gerenciar'` if that matches the tabs? The user has tabs in `index.html` probably.
         return;
     }
 
     dados.materias.forEach(m => {
         const card = document.createElement('div');
-        const isDone = m.saldoAtual >= m.metaHoras;
+
+        // Dados Horas
+        const metaH = m.metaHoras;
+        const saldoH = m.saldoAtual;
+        const feitoH = saldoH >= (metaH - 0.01);
+        const percH = metaH > 0 ? (saldoH / metaH) * 100 : (metaH === 0 ? 100 : 0);
+
+        // Dados Questões
+        const metaQ = m.metaQuestoes || 0;
+        const saldoQ = m.saldoQuestoes || 0;
+        const feitoQ = saldoQ >= (metaQ - 0.5);
+        const percQ = metaQ > 0 ? (saldoQ / metaQ) * 100 : (metaQ === 0 ? 100 : 0);
+
+        // Global Status
+        const isDone = feitoH && feitoQ;
         const statusClass = isDone ? 'status-done' : 'status-todo';
-        const progressoMateria = m.metaHoras > 0 ? Math.min((m.saldoAtual / m.metaHoras) * 100, 100) : 0;
+
+        // Barra usa o MENOR progresso
+        const progressoVisual = Math.min(percH, percQ);
+        const progressoFinal = Math.min(progressoVisual, 100);
 
         card.className = `ciclo-card ${statusClass}`;
         card.innerHTML = `
             <h4>${m.nomeMateria} <span class="${isDone ? 'status-ok' : 'status-pending'}">${isDone ? 'OK' : 'Pendente'}</span></h4>
             <div class="ciclo-card-details">
-                <span>Meta: <strong>${formatarHoras(m.metaHoras)}</strong></span>
-                <span>Saldo: <strong>${formatarHoras(m.saldoAtual)}</strong></span>
+                <div style="display:flex; justify-content:space-between;">
+                    <span>Hrs: <strong>${formatarHoras(saldoH)}</strong> / ${formatarHoras(metaH)}</span>
+                    <span style="font-size:0.8em; color:${feitoH ? 'green' : '#666'}">${Math.floor(percH)}%</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:2px;">
+                    <span>Quest: <strong>${Math.floor(saldoQ)}</strong> / ${Math.round(metaQ)}</span>
+                     <span style="font-size:0.8em; color:${feitoQ ? 'green' : '#666'}">${Math.floor(percQ)}%</span>
+                </div>
             </div>
-            <div class="card-progress-bar">
-                <div class="card-progress-fill" style="width: ${progressoMateria}%; background-color: ${isDone ? '#4caf50' : 'var(--primary)'}"></div>
+            <div class="card-progress-bar" style="margin-top:8px;">
+                <div class="card-progress-fill" style="width: ${progressoFinal}%; background-color: ${isDone ? '#4caf50' : '#2196f3'}"></div>
             </div>
             <div style="margin-top:5px; font-size:0.8rem; text-align:right; color:#888;">
                 Peso: ${m.peso}

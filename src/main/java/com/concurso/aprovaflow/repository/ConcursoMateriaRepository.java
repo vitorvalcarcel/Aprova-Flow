@@ -17,4 +17,6 @@ public interface ConcursoMateriaRepository extends JpaRepository<ConcursoMateria
     Optional<ConcursoMateria> findByConcursoAndMateria(Concurso concurso, Materia materia);
     
     List<ConcursoMateria> findByConcursoId(Long concursoId);
+
+    boolean existsByMateriaId(Long materiaId);
 }

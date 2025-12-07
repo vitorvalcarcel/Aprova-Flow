@@ -23,4 +23,6 @@ public interface RegistroEstudoRepository extends JpaRepository<RegistroEstudo, 
             "((:dataInicio IS NULL OR r.data >= :dataInicio) AND (:dataFim IS NULL OR r.data <= :dataFim)) " +
             "ORDER BY r.data DESC, r.horaInicio DESC")
     List<RegistroEstudo> findWithFilters(Long userId, List<Long> materiaIds, List<Long> topicoIds, Long tipoEstudoId, java.time.LocalDate dataInicio, java.time.LocalDate dataFim);
+
+    boolean existsByMateriaId(Long materiaId);
 }

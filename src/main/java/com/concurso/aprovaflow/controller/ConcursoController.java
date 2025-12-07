@@ -105,4 +105,14 @@ public class ConcursoController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> editar(@PathVariable Long id, @RequestBody com.concurso.aprovaflow.dto.ConcursoDTO dto) {
+        try {
+            Concurso atualizado = service.atualizarConcurso(id, dto);
+            return ResponseEntity.ok(atualizado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

@@ -23,6 +23,9 @@ public class MateriaService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private com.concurso.aprovaflow.repository.ConcursoMateriaRepository concursoMateriaRepository;
+
     private User getUsuarioLogado() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Usuário off"));
@@ -40,7 +43,19 @@ public class MateriaService {
 
     public void excluir(Long id) {
         User user = getUsuarioLogado();
-        repository.deleteById(id);
+        Materia materia = repository.findById(id).orElseThrow(() -> new RuntimeException("Matéria não encontrada"));
+        
+        // Validação 1: Está sendo usada em algum registro de estudo?
+        if (registroRepository.existsByMateriaId(id)) {
+            throw new RuntimeException("Não é possível excluir matéria que possui registros de estudo vinculados.");
+        }
+
+        // Validação 2: Está vinculada a algum concurso?
+        if (concursoMateriaRepository.existsByMateriaId(id)) {
+             throw new RuntimeException("Não é possível excluir matéria vinculada a um concurso.");
+        }
+
+        repository.delete(materia);
     }
 
     public void resetarHistorico(Long materiaId) {

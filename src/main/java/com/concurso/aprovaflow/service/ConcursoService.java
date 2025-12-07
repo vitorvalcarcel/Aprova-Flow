@@ -96,4 +96,20 @@ public class ConcursoService {
         
         concursoRepository.delete(target);
     }
+    
+    @Transactional
+    public Concurso atualizarConcurso(Long id, com.concurso.aprovaflow.dto.ConcursoDTO dto) {
+        User user = getUsuarioLogado();
+        Concurso target = concursoRepository.findById(id)
+                .filter(c -> c.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new RuntimeException("Concurso não encontrado"));
+
+        target.setNome(dto.getNome());
+        target.setCargaHorariaCiclo(dto.getCargaHorariaCiclo());
+        target.setQuestoesMetaInicial(dto.getQuestoesMetaInicial());
+        target.setQuestoesIncremento(dto.getQuestoesIncremento());
+        target.setDataProva(dto.getDataProva());
+        
+        return concursoRepository.save(target);
+    }
 }
