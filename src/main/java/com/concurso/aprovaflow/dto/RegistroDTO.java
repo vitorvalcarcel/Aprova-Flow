@@ -15,4 +15,5 @@ public class RegistroDTO {
     private Integer questoesCertas;
     private Long materiaId;
     private Long topicoId;
+    private String topicoNome;
 }

@@ -54,11 +54,4 @@ export function fecharModal() {
     if (overlay) overlay.style.display = 'none';
 }
 
-// --- FORMATTERS ---
 
-export function getTempoFormatado(segundosTotais) {
-    const horas = Math.floor(segundosTotais / 3600);
-    const minutos = Math.floor((segundosTotais % 3600) / 60);
-    const segundos = segundosTotais % 60;
-    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
-}

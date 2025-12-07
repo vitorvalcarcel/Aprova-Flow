@@ -59,6 +59,18 @@ public class RegistroEstudoController {
         if (dto.getTopicoId() != null) {
             var topico = topicoRepository.findById(dto.getTopicoId()).orElse(null); 
             novo.setTopico(topico);
+        } else if (dto.getTopicoNome() != null && !dto.getTopicoNome().trim().isEmpty()) {
+            // Lógica Get or Create
+            var topicoExistente = topicoRepository.findByDescricaoAndMateriaId(dto.getTopicoNome().trim(), dto.getMateriaId());
+            if (topicoExistente.isPresent()) {
+                novo.setTopico(topicoExistente.get());
+            } else {
+                com.concurso.aprovaflow.model.Topico novoTopico = new com.concurso.aprovaflow.model.Topico();
+                novoTopico.setDescricao(dto.getTopicoNome().trim());
+                novoTopico.setMateria(materia); // Usando a materia já buscada acima
+                novoTopico = topicoRepository.save(novoTopico);
+                novo.setTopico(novoTopico);
+            }
         }
 
         if (dto.getTipoEstudoId() != null) {

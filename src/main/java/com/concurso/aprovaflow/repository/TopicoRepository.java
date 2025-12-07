@@ -10,4 +10,5 @@ import java.util.List;
 public interface TopicoRepository extends JpaRepository<Topico, Long> {
     List<Topico> findByMateriaIdOrderByNumeroEditalAsc(Long materiaId);
     List<Topico> findAllByMateriaUser(User user);
+    java.util.Optional<Topico> findByDescricaoAndMateriaId(String descricao, Long materiaId);
 }

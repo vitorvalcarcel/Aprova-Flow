@@ -181,11 +181,8 @@ export function mudarModo(modo) {
 
 // Timer Logic
 export function iniciarCronometro() {
-    const materia = document.getElementById('timer-materia').value;
-    if (!materia) {
-        alert("Selecione uma matéria!");
-        return;
-    }
+    // Matéria não é mais obrigatória para iniciar, apenas para salvar.
+    // if (!materia) { ... } REMOVIDO
 
     const btnStart = document.getElementById('btnStart');
     const btnPause = document.getElementById('btnPause');
@@ -241,8 +238,9 @@ export function continuarCronometro() {
 }
 
 export function cancelarCronometro() {
-    if (!confirm("Cancelar sessão? O tempo será perdido.")) return;
-    resetarTimer();
+    confirmarAcao("Deseja realmente cancelar a sessão? O tempo será perdido.", () => {
+        resetarTimer();
+    });
 }
 
 function resetarTimer() {
@@ -292,10 +290,10 @@ export async function salvarTimer() {
     const horaInicioStr = dataInicio.toTimeString().split(' ')[0].substring(0, 5);
     const diaStr = dataInicio.toISOString().split('T')[0];
 
-    if (!materiaId) { alert("Matéria obrigatória"); return; }
+    if (!materiaId) { mostrarModal("Atenção", "Matéria obrigatória para salvar o estudo."); return; }
 
     if (!concursoAtivoId) {
-        alert("Nenhum concurso ativo identificado. Recarregue a página.");
+        mostrarModal("Atenção", "Nenhum concurso ativo identificado. Recarregue a página.");
         return;
     }
 
@@ -321,7 +319,7 @@ export async function salvarTimer() {
         });
 
         if (res.ok) {
-            mostrarModal("Estudo registrado com sucesso!");
+            mostrarModal("Sucesso", "Estudo registrado com sucesso!");
             resetarTimer();
             carregarDashboard();
         } else {
@@ -348,7 +346,7 @@ export async function salvarManual(e) {
     const anotacoes = document.getElementById('manual-anotacoes').value;
 
     if (!document.getElementById('manual-materia-input').value) {
-        alert("Preencha a matéria");
+        mostrarModal("Atenção", "Preencha a matéria para salvar.");
         return;
     }
 
@@ -359,7 +357,7 @@ export async function salvarManual(e) {
             const c = await resC.json();
             concursoAtivoId = c.id;
         } else {
-            alert("Nenhum concurso ativo. Crie um concurso primeiro.");
+            mostrarModal("Atenção", "Nenhum concurso ativo. Crie um concurso primeiro.");
             return;
         }
     }
@@ -386,7 +384,7 @@ export async function salvarManual(e) {
         });
 
         if (res.ok) {
-            mostrarModal("Registro manual salvo!");
+            mostrarModal("Sucesso", "Registro manual salvo!");
             document.getElementById('formManual').reset();
             document.getElementById("manual-data").valueAsDate = new Date();
 
@@ -397,10 +395,10 @@ export async function salvarManual(e) {
             carregarDashboard();
         } else {
             const txt = await res.text();
-            mostrarModal("Erro: " + txt);
+            mostrarModal("Erro", "Erro: " + txt);
         }
     } catch (err) {
         console.error(err);
-        mostrarModal("Erro de conexão.");
+        mostrarModal("Erro", "Erro de conexão.");
     }
 }

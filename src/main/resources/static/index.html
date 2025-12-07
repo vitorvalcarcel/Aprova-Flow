@@ -137,7 +137,7 @@
                             </div>
                             <p class="timer-status" id="statusTimer">Bora estudar?</p>
 
-                            <div id="timer-details" style="display: none;">
+                            <div id="timer-details" class="timer-details-box" style="display: none;">
                                 <div class="form-group">
                                     <label>Tipo de Estudo</label>
                                     <div class="autocomplete-wrapper">
@@ -165,14 +165,16 @@
                                 </div>
 
                                 <div class="timer-actions">
-                                    <button type="button" class="btn-cancel" onclick="cancelarCronometro()">
+                                    <button type="button" class="btn-cancel" onclick="cancelarCronometro()"
+                                        title="Cancelar">
                                         <span class="material-icons">delete</span>
                                     </button>
-                                    <button type="button" class="btn-continue" onclick="continuarCronometro()">
+                                    <button type="button" class="btn-continue" onclick="continuarCronometro()"
+                                        title="Continuar">
                                         <span class="material-icons">play_arrow</span>
                                     </button>
                                     <button type="button" class="btn-save-timer" onclick="salvarTimer()">
-                                        <span class="material-icons">save</span>
+                                        <span class="material-icons">save</span> Salvar Sessão
                                     </button>
                                 </div>
                             </div>
