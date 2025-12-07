@@ -3,7 +3,15 @@ import { API_URL } from './config.js';
 // Cache local de matérias para dropdowns
 let materiasCache = [];
 
+export function limparCacheMaterias() {
+    materiasCache = [];
+}
+
 export async function carregarMeusConcursos() {
+    // Limpar cache sempre que entrar para garantir frescor, 
+    // pois o usuário pode ter cadastrado novas matérias na aba Gerenciar.
+    limparCacheMaterias();
+
     const lista = document.getElementById('lista-meus-concursos');
     if (!lista) return;
 

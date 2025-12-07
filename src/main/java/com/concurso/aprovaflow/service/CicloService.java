@@ -118,9 +118,35 @@ public class CicloService {
                 ));
 
         // 4. Montar DTOs das matérias
+        // 4. Montar DTOs das matérias
         List<MateriaCicloDTO> materiaDTOs = new ArrayList<>();
-        double somaPesosFinal = somaPesos;
+        
+        // Separação em grupos: Fixas e Por Peso
+        List<ConcursoMateria> materiasFixas = new ArrayList<>();
+        List<ConcursoMateria> materiasPeso = new ArrayList<>();
+        
+        for (ConcursoMateria cm : configMaterias) {
+            if (cm.getHorasCiclo() != null && cm.getHorasCiclo() > 0) {
+                materiasFixas.add(cm);
+            } else {
+                materiasPeso.add(cm);
+            }
+        }
+        
+        double totalHorasFixas = materiasFixas.stream()
+            .mapToDouble(ConcursoMateria::getHorasCiclo)
+            .sum();
+            
+        double saldoDisponivel = cargaHorariaCiclo - totalHorasFixas;
+        if (saldoDisponivel < 0) saldoDisponivel = 0.0; // Evitar negativo se estourar
+        
+        double somaPesosVariaveis = materiasPeso.stream()
+            .mapToDouble(cm -> cm.getPeso() != null ? cm.getPeso() : 0.0)
+            .sum();
+            
+        if (somaPesosVariaveis == 0 && !materiasPeso.isEmpty()) somaPesosVariaveis = 1.0;
 
+        // Processar Todas
         for (ConcursoMateria cm : configMaterias) {
             Double peso = cm.getPeso() != null ? cm.getPeso() : 0.0;
             Double metaHoras;
@@ -128,15 +154,26 @@ public class CicloService {
             if (cm.getHorasCiclo() != null && cm.getHorasCiclo() > 0) {
                  metaHoras = cm.getHorasCiclo();
             } else {
-                 metaHoras = (peso / somaPesosFinal) * cargaHorariaCiclo;
+                 if (somaPesosVariaveis > 0) {
+                    metaHoras = (peso / somaPesosVariaveis) * saldoDisponivel;
+                 } else {
+                    metaHoras = 0.0;
+                 }
             }
-            Double metaQuestoesMat = (peso / somaPesosFinal) * metaQuestoesCiclo;
+            Double metaQuestoesMat = (peso / somaPesos) * metaQuestoesCiclo; // Meta de questões continua baseada no peso global? Ou recalcula? 
+            // O user reclamou do "Cálculo Lógico MATEMATICO do CICLO". 
+            // Geralmente meta de questoes tbm segue peso. 
+            // Vou manter a logica original de questoes (baseada no peso global) pois a reclamação foi sobre "Cálculo Híbrido" de horas.
+            // Mas note que 'somaPesos' original (linha 57) inclui TODOS. Vou manter a variavel 'somaPesos' original acessivel ou recalculá-la.
+            // A variavel 'somaPesos' foi calculada antes (linhas 57-59). Ela inclui todos.
             
             Double totalEstudado = horasEstudadasMap.getOrDefault(cm.getMateria().getId(), 0.0);
             Double totalDescontado = horasDescontadasMap.getOrDefault(cm.getMateria().getId(), 0.0);
 
             Integer totalQFeitas = questoesFeitasMap.getOrDefault(cm.getMateria().getId(), 0);
             Integer totalQDescontadas = questoesDescontadasMap.getOrDefault(cm.getMateria().getId(), 0);
+            
+            int questoesProvaSafe = cm.getQuestoesProva() != null ? cm.getQuestoesProva() : 0;
             
             materiaDTOs.add(new MateriaCicloDTO(
                     cm.getId(),
@@ -149,7 +186,7 @@ public class CicloService {
                     totalQFeitas,
                     totalQDescontadas,
                     cm.getOrdem() != null ? cm.getOrdem() : 999,
-                    cm.getQuestoesProva()
+                    questoesProvaSafe
             ));
         }
         
